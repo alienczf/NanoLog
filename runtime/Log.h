@@ -24,7 +24,6 @@
 #include "Cycles.h"
 #include "Packer.h"
 #include "Portability.h"
-#include "TestUtil.h"
 #include "Util.h"
 
 #ifndef LOG_H
@@ -654,13 +653,6 @@ namespace Log {
         Encoder(char *buffer, size_t bufferSize,
                 bool skipCheckpoint=false,
                 bool forceDictionaryOutput=false);
-
-#ifdef PREPROCESSOR_NANOLOG
-        long encodeLogMsgs(char *from, uint64_t nbytes,
-                           uint32_t bufferId,
-                           bool wrapAround,
-                           uint64_t *numEventsCompressed);
-#endif // PREPROCESSOR_NANOLOG
 
         long encodeLogMsgs(char *from, uint64_t nbytes,
                                     uint32_t bufferId,

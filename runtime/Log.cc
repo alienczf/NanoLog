@@ -60,21 +60,6 @@ Log::insertCheckpoint(char **out, char *outLimit, bool writeDictionary) {
     if (!writeDictionary)
         return true;
 
-#ifdef PREPROCESSOR_NANOLOG
-    long int bytesWritten = GeneratedFunctions::writeDictionary(*out, outLimit);
-
-    if (bytesWritten == -1) {
-        // roll back and exit
-        *out -= sizeof(Checkpoint);
-        return false;
-    }
-
-    *out += bytesWritten;
-    ck->newMetadataBytes = static_cast<uint32_t>(bytesWritten);
-    ck->totalMetadataEntries = static_cast<uint32_t>(
-            GeneratedFunctions::numLogIds);
-#endif // PREPROCESSOR_NANOLOG
-
     return true;
 }
 /**
@@ -109,11 +94,7 @@ Log::Encoder::Encoder(char *buffer,
     if (skipCheckpoint && !forceDictionaryOutput)
         return;
 
-#ifdef PREPROCESSOR_NANOLOG
-    bool writeDictionary = true;
-#else
     bool writeDictionary = forceDictionaryOutput;
-#endif
 
     // In virtually all cases, our output buffer should have enough
     // space to store the dictionary. If not, we fail in place.
@@ -183,98 +164,6 @@ Log::Encoder::encodeNewDictionaryEntries(uint32_t& currentPosition,
     return df->newMetadataBytes;
 }
 
-#ifdef PREPROCESSOR_NANOLOG
-/**
- * Interprets the uncompressed log messages (created by the compile-time
- * generated code) contained in the *from buffer and compresses them to
- * the internal buffer. The encoded data can later be retrieved via swapBuffer()
- *
- * \param from
- *      A buffer containing the uncompressed log message created by the
- *      compile-time generated code
- * \param nbytes
- *      Maximum number of bytes that can be extracted from the *from buffer
- * \param bufferId
- *      The runtime thread/StagingBuffer id to associate the logs with
- * \param newPass
- *      Indicates that this encoding correlates with starting a new pass
- *      through the runtime StagingBuffers. In other words, this should be true
- *      on the first invocation of this function after the runtime has checked
- *      and encoded all the StagingBuffers at least once.
- * \param[out] numEventsCompressed
- *      adds the number of log messages processed in this invocation
- *
- * \return
- *      The number of bytes read from *from. A value of 0 indicates there is
- *      insufficient space in the internal buffer to fit the compressed message.
- */
-long
-Log::Encoder::encodeLogMsgs(char *from,
-                                    uint64_t nbytes,
-                                    uint32_t bufferId,
-                                    bool newPass,
-                                    uint64_t *numEventsCompressed)
-{
-    if (!encodeBufferExtentStart(bufferId, newPass))
-        return 0;
-
-    uint64_t lastTimestamp = 0;
-    long remaining = nbytes;
-    long numEventsProcessed = 0;
-    char *bufferStart = writePos;
-
-    while (remaining > 0) {
-        auto *entry = reinterpret_cast<UncompressedEntry*>(from);
-
-        if (entry->entrySize > remaining) {
-            if (entry->entrySize < (NanoLogConfig::STAGING_BUFFER_SIZE/2))
-                break;
-
-            GeneratedFunctions::LogMetadata &lm
-                            = GeneratedFunctions::logId2Metadata[entry->fmtId];
-            fprintf(stderr, "ERROR: Attempting to log a message that is %u "
-                            "bytes while the maximum allowable size is %u.\r\n"
-                            "This occurs for the log message %s:%u '%s'\r\n",
-                            entry->entrySize,
-                            NanoLogConfig::STAGING_BUFFER_SIZE/2,
-                            lm.fileName, lm.lineNumber, lm.fmtString);
-        }
-
-        // Check for free space using the worst case assumption that
-        // none of the arguments compressed and there are as many Nibbles
-        // as there are data bytes.
-        uint32_t maxCompressedSize = downCast<uint32_t>(2*entry->entrySize
-                                + sizeof(Log::UncompressedEntry));
-        if (maxCompressedSize > (endOfBuffer - writePos))
-            break;
-
-        compressLogHeader(entry, &writePos, lastTimestamp);
-        lastTimestamp = entry->timestamp;
-
-        size_t argBytesWritten =
-            GeneratedFunctions::compressFnArray[entry->fmtId](entry, writePos);
-        writePos += argBytesWritten;
-
-        remaining -= entry->entrySize;
-        from += entry->entrySize;
-
-        ++numEventsProcessed;
-    }
-
-    assert(currentExtentSize);
-    uint32_t currentSize;
-    std::memcpy(&currentSize, currentExtentSize, sizeof(uint32_t));
-    currentSize += downCast<uint32_t>(writePos - bufferStart);
-    std::memcpy(currentExtentSize, &currentSize, sizeof(uint32_t));
-
-    if (numEventsCompressed)
-        *numEventsCompressed += numEventsProcessed;
-
-    return nbytes - remaining;
-}
-#endif // PREPROCESSOR_NANOLOG
-
-
 /**
  * Compresses a *from buffer filled with UncompressedEntry's and their
  * arguments to an internal buffer. The encoded data can then later be retrieved
@@ -332,10 +221,8 @@ Log::Encoder::encodeLogMsgs(char *from,
                 fprintf(stderr, "NanoLog Error: Metadata missing for a dynamic "
                                 "log message (id=%u) during compression. If "
                                 "you are using Preprocessor NanoLog, there is "
-                                "be a problem with your integration (static "
-                                "logs detected=%lu).\r\n",
-                                entry->fmtId,
-                                 GeneratedFunctions::numLogIds);
+                                "be a problem with your integration.\r\n",
+                                entry->fmtId);
             }
 
             break;
@@ -1366,41 +1253,6 @@ Log::Decoder::BufferFragment::decompressNextLogStatement(FILE *outputFd,
         strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S", tm);
     }
 
-#ifdef PREPROCESSOR_NANOLOG
-    if (fmtId2metadata.empty() || aggregationFn != nullptr) {
-        // Output the context
-        struct GeneratedFunctions::LogMetadata meta =
-                                GeneratedFunctions::logId2Metadata[nextLogId];
-        if (outputFd) {
-            fprintf(outputFd,"%s.%09.0lf %s:%u %s[%u]: "
-                    , timeString
-                    , nanos
-                    , meta.fileName
-                    , meta.lineNumber
-                    , logLevelNames[meta.logLevel]
-                    , runtimeId);
-        }
-
-        void (*aggFn)(const char*, ...) = nullptr;
-        if (aggregationFilterId == nextLogId)
-            aggFn = aggregationFn;
-
-        if (nextLogId >= GeneratedFunctions::numLogIds) {
-            fprintf(stderr, "Log message id=%u not found in the generated "
-                            "functions list for Preprocessor NanoLog.\r\n"
-                            "This indicates either a corrupt log file or "
-                            "a mismatched decompressor as we only have %lu "
-                            "generated functions\r\n"
-                            , nextLogId
-                            , GeneratedFunctions::numLogIds);
-            return false;
-        }
-
-        GeneratedFunctions::decompressAndPrintFnArray[nextLogId](&readPos,
-                                                                 outputFd,
-                                                                 aggFn);
-    } else
-#endif // PREPROCESSOR_NANOLOG
     {
         using namespace BufferUtils;
         auto *metadata = reinterpret_cast<FormatMetadata*>(

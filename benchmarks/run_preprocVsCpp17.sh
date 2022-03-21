@@ -22,11 +22,6 @@ declare -a OPTIONS=(
                 "--discardEntriesAtStagingBuffer"
                 )
 
-declare -a MAKE_OPTIONS=(
-                "PREPROCESSOR_NANOLOG=no"
-                "PREPROCESSOR_NANOLOG=yes"
-                )
-
 ITTERATIONS_ALL="100000000"
 
 for itterations in $ITTERATIONS_ALL

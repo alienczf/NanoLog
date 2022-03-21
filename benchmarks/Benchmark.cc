@@ -32,13 +32,7 @@
 
 #include "Cycles.h"
 #include "TimeTrace.h"
-
-#ifdef PREPROCESSOR_NANOLOG
-#include "NanoLog.h"
-#else
 #include "NanoLogCpp17.h"
-#endif
-
 
 static uint64_t cntr = 0;
 
@@ -100,11 +94,7 @@ int main(int argc, char** argv) {
 
     printf("BENCH_OP = %s\r\n", BENCH_OPS_AS_A_STR);
 
-#ifdef PREPROCESSOR_NANOLOG
-    constexpr const char system[] = "PreProc";
-#else
     constexpr const char system[] = "C++17";
-#endif
     printf("NanoLog System: %s\r\n", system);
 
 #ifdef BENCHMARK_DISCARD_ENTRIES_AT_STAGINGBUFFER

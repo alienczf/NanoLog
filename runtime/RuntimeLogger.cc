@@ -439,14 +439,6 @@ RuntimeLogger::compressionThreadMain() {
                         long bytesToEncode = std::min(
                                 NanoLogConfig::RELEASE_THRESHOLD,
                                 remaining);
-#ifdef PREPROCESSOR_NANOLOG
-                        long bytesRead = encoder.encodeLogMsgs(
-                                peekPosition + (peekBytes - remaining),
-                                bytesToEncode,
-                                sb->getId(),
-                                wrapAround,
-                                &logsProcessed);
-#else
                         long bytesRead = encoder.encodeLogMsgs(
                                 peekPosition + (peekBytes - remaining),
                                 bytesToEncode,
@@ -454,8 +446,6 @@ RuntimeLogger::compressionThreadMain() {
                                 wrapAround,
                                 shadowStaticInfo,
                                 &logsProcessed);
-#endif
-
 
                         if (bytesRead == 0) {
                             lastStagingBufferChecked = i;
