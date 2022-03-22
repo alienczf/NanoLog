@@ -12,6 +12,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#pragma once
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -20,9 +22,6 @@
 
 #include "Common.h"
 #include "Portability.h"
-
-#ifndef PACKER_H
-#define PACKER_H
 
 /**
  * This file contains a collection of pack/unpack functions that are used
@@ -381,5 +380,3 @@ class Nibbler {
   const char* getEndOfPackedArguments() { return endOfValues; }
 };
 }  // namespace BufferUtils
-
-#endif /* PACKER_H */
