@@ -13,7 +13,7 @@ echo "print CMAKE_FLAGS $CMAKE_FLAGS"
 CC_DEBUG_BIN="${DIR_ROOT}/_build/d"
 mkdir -p "${CC_DEBUG_BIN}"
 pushd "${CC_DEBUG_BIN}"
-  touch CMakeCache.txt && cmake -DCMAKE_INSTALL_PREFIX=../../_run -DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} -GNinja ../..
+  touch CMakeCache.txt && cmake -DBUILD_DEV=1 -DCMAKE_INSTALL_PREFIX=../../_run -DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} -GNinja ../..
 popd
 
 
@@ -21,7 +21,7 @@ popd
 CC_RELEASE_BIN="${DIR_ROOT}/_build/r"
 mkdir -p "${CC_RELEASE_BIN}"
 pushd "${CC_RELEASE_BIN}"
-touch CMakeCache.txt && cmake -DCMAKE_INSTALL_PREFIX=../../_run -DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} -GNinja ../..
+touch CMakeCache.txt && cmake -DBUILD_DEV=1 -DCMAKE_INSTALL_PREFIX=../../_run -DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} -GNinja ../..
 ninja install
 popd
 
