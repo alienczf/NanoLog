@@ -25,66 +25,55 @@ namespace NanoLogInternal {
  * handle the fencing.
  */
 class Fence {
-  public:
+ public:
+  /**
+   * This method creates a boundary across which load instructions cannot
+   * migrate: if a memory read comes from code occurring before (after)
+   * invoking this method, the read is guaranteed to complete before (after)
+   * the method is invoked.
+   */
+  static void inline lfence() { __asm__ __volatile__("lfence" ::: "memory"); }
 
-    /**
-     * This method creates a boundary across which load instructions cannot
-     * migrate: if a memory read comes from code occurring before (after)
-     * invoking this method, the read is guaranteed to complete before (after)
-     * the method is invoked.
-     */
-    static void inline lfence()
-    {
-        __asm__ __volatile__("lfence" ::: "memory");
-    }
+  /**
+   * This method creates a boundary across which store instructions cannot
+   * migrate: if a memory store comes from code occurring before (after)
+   * invoking this method, the store is guaranteed to complete before (after)
+   * the method is invoked.
+   */
+  static void inline sfence() { __asm__ __volatile__("sfence" ::: "memory"); }
 
-    /**
-     * This method creates a boundary across which store instructions cannot
-     * migrate: if a memory store comes from code occurring before (after)
-     * invoking this method, the store is guaranteed to complete before (after)
-     * the method is invoked.
-     */
-    static void inline sfence()
-    {
-        __asm__ __volatile__("sfence" ::: "memory");
-    }
+  /**
+   * This method provides appropriate fencing for the beginning of a critical
+   * section.  Normally this method is invoked immediately after performing
+   * synchronization to enter a critical section, such as acquiring a lock.
+   * It guarantees the following:
+   * - Loads coming from code following this method will see any changes
+   *   made to memory by other threads before the method is invoked.
+   * - Stores coming from code following this method will be reflected
+   *   in memory after the method is invoked.  Note: this property depends
+   *   on the existence of branch instructions in the synchronization step
+   *   that precedes this method (stores cannot be reflected in memory until
+   *   after any preceding branches have been resolved).
+   */
+  static void inline enter() { lfence(); }
 
-    /**
-     * This method provides appropriate fencing for the beginning of a critical
-     * section.  Normally this method is invoked immediately after performing
-     * synchronization to enter a critical section, such as acquiring a lock.
-     * It guarantees the following:
-     * - Loads coming from code following this method will see any changes
-     *   made to memory by other threads before the method is invoked.
-     * - Stores coming from code following this method will be reflected
-     *   in memory after the method is invoked.  Note: this property depends
-     *   on the existence of branch instructions in the synchronization step
-     *   that precedes this method (stores cannot be reflected in memory until
-     *   after any preceding branches have been resolved).
-     */
-    static void inline enter()
-    {
-        lfence();
-    }
-
-    /**
-     * This method provides appropriate fencing for the end of a critical
-     * section.  Normally this method is invoked immediately prior to releasing
-     * the lock for the critical section.  It guarantees the following:
-     * - Loads coming from code preceding this method will complete before the
-     *   method returns, so they will not see any changes made to memory by other
-     *   threads after the method is invoked.
-     * - Stores coming from code preceding this method will be reflected
-     *   in memory before the method returns, so when the next thread enters
-     *   the critical section it is guaranteed to see any changes made in the
-     *   current critical section.
-     */
-    static void inline leave()
-    {
-        sfence();
-        lfence();
-    }
+  /**
+   * This method provides appropriate fencing for the end of a critical
+   * section.  Normally this method is invoked immediately prior to releasing
+   * the lock for the critical section.  It guarantees the following:
+   * - Loads coming from code preceding this method will complete before the
+   *   method returns, so they will not see any changes made to memory by other
+   *   threads after the method is invoked.
+   * - Stores coming from code preceding this method will be reflected
+   *   in memory before the method returns, so when the next thread enters
+   *   the critical section it is guaranteed to see any changes made in the
+   *   current critical section.
+   */
+  static void inline leave() {
+    sfence();
+    lfence();
+  }
 };
-}; // namespace NanoLogInternal
+};  // namespace NanoLogInternal
 
 #endif  // FENCE_H

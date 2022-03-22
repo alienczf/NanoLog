@@ -18,27 +18,24 @@
  * testing parallel builds.
  */
 
-#include <string>
-
-#include "NanoLog.h"
-#include "Cycles.h"
-
 #include "SimpleTestObject.h"
 
-void
-SimpleTest::logSomething()
-{
-    static int cnt = 0;
-    NANO_LOG(NOTICE, "SimpleTest::logSomething: Something = %d", ++cnt);
+#include <string>
+
+#include "Cycles.h"
+#include "NanoLog.h"
+
+void SimpleTest::logSomething() {
+  static int cnt = 0;
+  NANO_LOG(NOTICE, "SimpleTest::logSomething: Something = %d", ++cnt);
 }
 
-void
-SimpleTest::wholeBunchOfLogStatements() {
-    NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: Here I am");
+void SimpleTest::wholeBunchOfLogStatements() {
+  NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: Here I am");
 
-    for (int i = 0; i < 10; ++i) {
-        NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: I am in a loop!");
-    }
+  for (int i = 0; i < 10; ++i) {
+    NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: I am in a loop!");
+  }
 
-    NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: exiting...");
+  NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: exiting...");
 }

@@ -23,7 +23,7 @@ namespace PerfUtils {
  * before main() is invoked, such as the creation of static variables.  It
  * also provides a mechanism for handling dependencies (where one class
  * needs to perform its once-only initialization before another).
- * 
+ *
  * The simplest way to use an Initialize object is to define a static
  * initialization method for a class, say Foo::init().  Then, declare
  * a static Initialize object in the class:
@@ -43,44 +43,42 @@ namespace PerfUtils {
  * destruction).
  */
 class Initialize {
-  public:
-    /**
-     * This form of constructor causes its function argument to be invoked
-     * when the object is constructed.  When used with a static Initialize
-     * object, this will cause #func to run before main() runs, so that
-     * #func can perform once-only initialization.
-     *
-     * \param func
-     *      This function is invoked with no arguments when the object is
-     *      constructed.  Typically the function will create static
-     *      objects and/or invoke other initialization functions.  The
-     *      function should normally contain an internal guard so that it
-     *      only performs its initialization the first time it is invoked.
-     */
-    Initialize(void (*func)()) {
-        (*func)();
-    }
+ public:
+  /**
+   * This form of constructor causes its function argument to be invoked
+   * when the object is constructed.  When used with a static Initialize
+   * object, this will cause #func to run before main() runs, so that
+   * #func can perform once-only initialization.
+   *
+   * \param func
+   *      This function is invoked with no arguments when the object is
+   *      constructed.  Typically the function will create static
+   *      objects and/or invoke other initialization functions.  The
+   *      function should normally contain an internal guard so that it
+   *      only performs its initialization the first time it is invoked.
+   */
+  Initialize(void (*func)()) { (*func)(); }
 
-    /**
-     * This form of constructor causes a new object of a particular class
-     * to be constructed with a no-argument constructor and assigned to a
-     * given pointer.  This form is typically used with a static Initialize
-     * object: the result is that the object will be created and assigned
-     * to the pointer before main() runs.
-     *
-     * \param p
-     *      Pointer to an object of any type. If the pointer is NULL then
-     *      it is replaced with a pointer to a newly allocated object of
-     *      the given type.
-     */
-    template<typename T>
-    explicit Initialize(T*& p) {
-        if (p == NULL) {
-            p = new T;
-        }
+  /**
+   * This form of constructor causes a new object of a particular class
+   * to be constructed with a no-argument constructor and assigned to a
+   * given pointer.  This form is typically used with a static Initialize
+   * object: the result is that the object will be created and assigned
+   * to the pointer before main() runs.
+   *
+   * \param p
+   *      Pointer to an object of any type. If the pointer is NULL then
+   *      it is replaced with a pointer to a newly allocated object of
+   *      the given type.
+   */
+  template <typename T>
+  explicit Initialize(T*& p) {
+    if (p == NULL) {
+      p = new T;
     }
+  }
 };
 
-} // end RAMCloud
+}  // namespace PerfUtils
 
 #endif  // RAMCLOUD_INITIALIZE_H

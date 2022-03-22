@@ -13,18 +13,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
- /**
-  * Helps tests the following components of the NanoLog system:
-  *   1) Detecting NANO_LOG redefinitions via #define (should handled
-  *      by C preprocessor) in a header file
-  *   2) Consistent assignment of format identifiers to a log statement
-  *      in the header file #include-d by multiple C++ files.
-  */
+/**
+ * Helps tests the following components of the NanoLog system:
+ *   1) Detecting NANO_LOG redefinitions via #define (should handled
+ *      by C preprocessor) in a header file
+ *   2) Consistent assignment of format identifiers to a log statement
+ *      in the header file #include-d by multiple C++ files.
+ */
+
+#include <stdint.h>
+#include <stdio.h>
 
 #include <iostream>
 #include <string>
-#include <stdio.h>
-#include <stdint.h>
 
 #ifndef PREPROCESSOR_NANOLOG
 #include "NanoLogCpp17.h"
@@ -39,20 +40,16 @@ using namespace NanoLog::LogLevels;
 // Tests whether the system can detect re #define's
 #define LOG NANO_LOG
 
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 // Tests whether header functions get parsed as well.
-static void
-hiddenInHeaderFilePrint()
-{
-    NANO_LOG(NOTICE,
-      "Messages in the Header"
-        " File"
-        );
+static void hiddenInHeaderFilePrint() {
+  NANO_LOG(NOTICE,
+           "Messages in the Header"
+           " File");
 }
 
 #pragma GCC diagnostic pop
 
-#endif // __Sample__h__
+#endif  // __Sample__h__

@@ -19,10 +19,10 @@
  * with simpleTest.cc in the root directory.
  */
 
-#include "Sample.h"
 #include "../SimpleTestObject.h"
+#include "Sample.h"
 
 void global_function() {
-    SimpleTest st(99);
-    st.logSomething();
+  SimpleTest st(99);
+  st.logSomething();
 }

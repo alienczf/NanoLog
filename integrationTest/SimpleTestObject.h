@@ -27,22 +27,19 @@
 #endif
 
 #include "Cycles.h"
-
 #include "folder/Sample.h"
 
 class SimpleTest {
-    int number;
+  int number;
 
-public:
-    SimpleTest(int number)
-        : number(number)
-    {}
+ public:
+  SimpleTest(int number) : number(number) {}
 
-    void logSomething();
-    void wholeBunchOfLogStatements();
-    inline void logStatementsInHeader() {
-        /// These should be assigned different ids due to line number
-        NANO_LOG(NOTICE, "In the header, I am %d", number);
-        NANO_LOG(NOTICE, "In the header, I am %d x2", number);
-    }
+  void logSomething();
+  void wholeBunchOfLogStatements();
+  inline void logStatementsInHeader() {
+    /// These should be assigned different ids due to line number
+    NANO_LOG(NOTICE, "In the header, I am %d", number);
+    NANO_LOG(NOTICE, "In the header, I am %d x2", number);
+  }
 };

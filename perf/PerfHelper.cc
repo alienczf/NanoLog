@@ -13,8 +13,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <cstdarg>
 #include <stdint.h>
+
+#include <cstdarg>
 
 /**
  * This file is the complement to PerfHelper.h, which contain various
@@ -25,39 +26,29 @@
 namespace PerfHelper {
 
 /// Flush the CPU data cache by reading and writing 100MB of new data.
-void
-flushCache()
-{
-    int hundredMegs = 100 * 1024 * 1024;
-    volatile char* block = new char[hundredMegs];
-    for (int i = 0; i < hundredMegs; i++)
-        block[i] = 1;
-    delete[] block;
+void flushCache() {
+  int hundredMegs = 100 * 1024 * 1024;
+  volatile char* block = new char[hundredMegs];
+  for (int i = 0; i < hundredMegs; i++) block[i] = 1;
+  delete[] block;
 }
 
 /// Used in functionCall().
-uint64_t
-plusOne(uint64_t x)
-{
-    return x + 1;
-}
+uint64_t plusOne(uint64_t x) { return x + 1; }
 
 // See documentation in PerfHelper.h
-int sum4(int a, int b, int c, int d) {
-    return a + b + c + d;
-}
+int sum4(int a, int b, int c, int d) { return a + b + c + d; }
 
 // See documentation in PerfHelper.h
-int va_argSum(int count, ...)
-{
-    int result = 0;
-    va_list args;
-    va_start(args, count);
-    for (int i = 0; i < count; ++i) {
-        result += va_arg(args, int);
-    }
-    va_end(args);
-    return result;
+int va_argSum(int count, ...) {
+  int result = 0;
+  va_list args;
+  va_start(args, count);
+  for (int i = 0; i < count; ++i) {
+    result += va_arg(args, int);
+  }
+  va_end(args);
+  return result;
 }
 
-} // PerfHelper namespace
+}  // namespace PerfHelper

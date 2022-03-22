@@ -12,7 +12,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 #ifndef NANOLOG_H
 #define NANOLOG_H
 
@@ -29,35 +29,35 @@ namespace NanoLog {
 // This extra namespace allows users to import only the LogLevel namespace
 // via the "using" directive (Ex: using namespace NanoLogLevels;)
 namespace LogLevels {
-    /**
-     * The levels of verbosity for messages logged with #NANO_LOG.
-     */
-    enum LogLevel {
-        // Keep this in sync with logLevelNames defined inside Log.cc.
-                SILENT_LOG_LEVEL = 0,
-        /**
-         * Bad stuff that shouldn't happen. The system broke its contract to
-         * users in some way or some major assumption was violated.
-         */
-                ERROR,
-        /**
-         * Messages at the WARNING level indicate that, although something went
-         * wrong or something unexpected happened, it was transient and
-         * recoverable.
-         */
-                WARNING,
-        /**
-         * Somewhere in between WARNING and DEBUG...
-         */
-                NOTICE,
-        /**
-         * Messages at the DEBUG level don't necessarily indicate that anything
-         * went wrong, but they could be useful in diagnosing problems.
-         */
-                DEBUG,
-        NUM_LOG_LEVELS // must be the last element in the enum
-    };
+/**
+ * The levels of verbosity for messages logged with #NANO_LOG.
+ */
+enum LogLevel {
+  // Keep this in sync with logLevelNames defined inside Log.cc.
+  SILENT_LOG_LEVEL = 0,
+  /**
+   * Bad stuff that shouldn't happen. The system broke its contract to
+   * users in some way or some major assumption was violated.
+   */
+  ERROR,
+  /**
+   * Messages at the WARNING level indicate that, although something went
+   * wrong or something unexpected happened, it was transient and
+   * recoverable.
+   */
+  WARNING,
+  /**
+   * Somewhere in between WARNING and DEBUG...
+   */
+  NOTICE,
+  /**
+   * Messages at the DEBUG level don't necessarily indicate that anything
+   * went wrong, but they could be useful in diagnosing problems.
+   */
+  DEBUG,
+  NUM_LOG_LEVELS  // must be the last element in the enum
 };
+};  // namespace LogLevels
 using namespace LogLevels;
 
 // User API
@@ -125,13 +125,13 @@ void printConfig();
  */
 int getCoreIdOfBackgroundThread();
 
-}; // namespace NanoLog
-
+};  // namespace NanoLog
 
 // These header files are needed for the in-lined runtime code. They are
 // included here so that the user of the NanoLog system only has to
 // #include one file.
-#include <cstring>         /* strlen + memcpy */
+#include <cstring> /* strlen + memcpy */
+
 #include "RuntimeLogger.h"
 
-#endif // NANOLOG_H
+#endif  // NANOLOG_H

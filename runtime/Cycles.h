@@ -28,72 +28,61 @@ namespace PerfUtils {
  * times.
  */
 class Cycles {
-  public:
-    static void init();
+ public:
+  static void init();
 
-    /**
-     * Return the current value of the fine-grain CPU cycle counter
-     * (accessed via the RDTSC instruction).
-     */
-    static NANOLOG_ALWAYS_INLINE
-    uint64_t
-    rdtsc()
-    {
+  /**
+   * Return the current value of the fine-grain CPU cycle counter
+   * (accessed via the RDTSC instruction).
+   */
+  static NANOLOG_ALWAYS_INLINE uint64_t rdtsc() {
 #if TESTING
-        if (mockTscValue)
-            return mockTscValue;
+    if (mockTscValue) return mockTscValue;
 #endif
-        size_t lo, hi;
-        __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
-//        __asm__ __volatile__("rdtscp" : "=a" (lo), "=d" (hi) : : "%rcx");
-        return (((uint64_t)hi << 32) | lo);
-    }
+    size_t lo, hi;
+    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+    //        __asm__ __volatile__("rdtscp" : "=a" (lo), "=d" (hi) : : "%rcx");
+    return (((uint64_t)hi << 32) | lo);
+  }
 
-    static NANOLOG_ALWAYS_INLINE
-    double
-    perSecond(){
-        return getCyclesPerSec();
-    }
-    static double toSeconds(int64_t cycles, double cyclesPerSec = 0);
-    static uint64_t fromSeconds(double seconds, double cyclesPerSec = 0);
-    static uint64_t toMicroseconds(uint64_t cycles, double cyclesPerSec = 0);
-    static uint64_t toNanoseconds(uint64_t cycles, double cyclesPerSec = 0);
-    static uint64_t fromNanoseconds(uint64_t ns, double cyclesPerSec = 0);
-    static void sleep(uint64_t us);
+  static NANOLOG_ALWAYS_INLINE double perSecond() { return getCyclesPerSec(); }
+  static double toSeconds(int64_t cycles, double cyclesPerSec = 0);
+  static uint64_t fromSeconds(double seconds, double cyclesPerSec = 0);
+  static uint64_t toMicroseconds(uint64_t cycles, double cyclesPerSec = 0);
+  static uint64_t toNanoseconds(uint64_t cycles, double cyclesPerSec = 0);
+  static uint64_t fromNanoseconds(uint64_t ns, double cyclesPerSec = 0);
+  static void sleep(uint64_t us);
 
-  private:
-    Cycles();
+ private:
+  Cycles();
 
-    /// Conversion factor between cycles and the seconds; computed by
-    /// Cycles::init.
-    static double cyclesPerSec;
+  /// Conversion factor between cycles and the seconds; computed by
+  /// Cycles::init.
+  static double cyclesPerSec;
 
-    /// Used for testing: if nonzero then this will be returned as the result
-    /// of the next call to rdtsc().
-    static uint64_t mockTscValue;
+  /// Used for testing: if nonzero then this will be returned as the result
+  /// of the next call to rdtsc().
+  static uint64_t mockTscValue;
 
-    /// Used for testing: if nonzero, then this is used to convert from
-    /// cycles to seconds, instead of cyclesPerSec above.
-    static double mockCyclesPerSec;
+  /// Used for testing: if nonzero, then this is used to convert from
+  /// cycles to seconds, instead of cyclesPerSec above.
+  static double mockCyclesPerSec;
 
-  public:
-    /**
-     * Returns the conversion factor between cycles in seconds, using
-     * a mock value for testing when appropriate.
-     */
-    static NANOLOG_ALWAYS_INLINE
-    double
-    getCyclesPerSec()
-    {
+ public:
+  /**
+   * Returns the conversion factor between cycles in seconds, using
+   * a mock value for testing when appropriate.
+   */
+  static NANOLOG_ALWAYS_INLINE double getCyclesPerSec() {
 #if TESTING
-        if (mockCyclesPerSec != 0.0) {
-            return mockCyclesPerSec;
-        }
-#endif
-        return cyclesPerSec;
+    if (mockCyclesPerSec != 0.0) {
+      return mockCyclesPerSec;
     }
+#endif
+    return cyclesPerSec;
+  }
 };
 
-} // end PerfUtils
+}  // namespace PerfUtils
 
 #endif  // RAMCLOUD_CYCLES_H

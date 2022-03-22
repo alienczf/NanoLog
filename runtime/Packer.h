@@ -13,11 +13,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <cassert>
-#include <type_traits>
-
 #include <cstddef>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
+#include <type_traits>
 
 #include "Common.h"
 #include "Portability.h"
@@ -74,8 +73,8 @@ namespace BufferUtils {
  */
 NANOLOG_PACK_PUSH
 struct TwoNibbles {
-    uint8_t first:4;
-    uint8_t second:4;
+  uint8_t first : 4;
+  uint8_t second : 4;
 };
 NANOLOG_PACK_POP
 
@@ -92,41 +91,41 @@ NANOLOG_PACK_POP
  * \return
  *      Special 4-bit value indicating how the primitive was packed
  */
-template<typename T>
-inline typename std::enable_if<std::is_integral<T>::value &&
-                                !std::is_signed<T>::value, int>::type
-pack(char **buffer, T val) {
-    // Binary search for the smallest container. It is also worth noting that
-    // with -O3, the compiler will strip out extraneous if-statements based on T
-    // For example, if T is uint16_t, it would only leave the t < 1U<<8 check
+template <typename T>
+inline typename std::enable_if<
+    std::is_integral<T>::value && !std::is_signed<T>::value, int>::type
+pack(char** buffer, T val) {
+  // Binary search for the smallest container. It is also worth noting that
+  // with -O3, the compiler will strip out extraneous if-statements based on T
+  // For example, if T is uint16_t, it would only leave the t < 1U<<8 check
 
-    //TODO(syang0) Is this too costly vs. a simple for loop?
-    int numBytes;
-    if (val < (1UL << 8)) {
-            numBytes = 1;
-    } else if (val < (1UL << 16)) {
-        numBytes = 2;
-    } else if (val < (1UL << 24)) {
-        numBytes = 3;
-    } else if (val < (1UL << 32)) {
-        numBytes = 4;
-    } else if (val < (1UL << 40)) {
-        numBytes = 5;
-    } else if (val < (1UL << 48)) {
-        numBytes = 6;
-    } else if (val < (1UL << 56)) {
-        numBytes = 7;
-    } else {
-        numBytes = 8;
-    }
+  // TODO(syang0) Is this too costly vs. a simple for loop?
+  int numBytes;
+  if (val < (1UL << 8)) {
+    numBytes = 1;
+  } else if (val < (1UL << 16)) {
+    numBytes = 2;
+  } else if (val < (1UL << 24)) {
+    numBytes = 3;
+  } else if (val < (1UL << 32)) {
+    numBytes = 4;
+  } else if (val < (1UL << 40)) {
+    numBytes = 5;
+  } else if (val < (1UL << 48)) {
+    numBytes = 6;
+  } else if (val < (1UL << 56)) {
+    numBytes = 7;
+  } else {
+    numBytes = 8;
+  }
 
-    // Although we store the entire value here, we take advantage of the fact
-    // that x86-64 is little-endian (storing the least significant bits first)
-    // and lop off the rest by only partially incrementing the buffer pointer
-    std::memcpy(*buffer, &val, sizeof(T));
-    *buffer += numBytes;
+  // Although we store the entire value here, we take advantage of the fact
+  // that x86-64 is little-endian (storing the least significant bits first)
+  // and lop off the rest by only partially incrementing the buffer pointer
+  std::memcpy(*buffer, &val, sizeof(T));
+  *buffer += numBytes;
 
-    return numBytes;
+  return numBytes;
 }
 
 /**
@@ -142,33 +141,27 @@ pack(char **buffer, T val) {
  * \return
  *      Special 4-bit value indicating how the primitive was packed
  */
-inline int
-pack(char **buffer, int32_t val)
-{
-    if (val >= 0 || val <= int32_t(-(1<<24)))
-        return pack<uint32_t>(buffer, static_cast<uint32_t>(val));
-    else
-        return 8 + pack<uint32_t>(buffer, static_cast<uint32_t>(-val));
+inline int pack(char** buffer, int32_t val) {
+  if (val >= 0 || val <= int32_t(-(1 << 24)))
+    return pack<uint32_t>(buffer, static_cast<uint32_t>(val));
+  else
+    return 8 + pack<uint32_t>(buffer, static_cast<uint32_t>(-val));
 }
 
-inline int
-pack(char **buffer, int64_t val)
-{
-    if (val >= 0 || val <= int64_t(-(1LL<<56)))
-        return pack<uint64_t>(buffer, static_cast<uint64_t>(val));
-    else
-        return 8 + pack<uint64_t>(buffer, static_cast<uint64_t>(-val));
+inline int pack(char** buffer, int64_t val) {
+  if (val >= 0 || val <= int64_t(-(1LL << 56)))
+    return pack<uint64_t>(buffer, static_cast<uint64_t>(val));
+  else
+    return 8 + pack<uint64_t>(buffer, static_cast<uint64_t>(-val));
 }
 
-//TODO(syang0) we should measure the performance of doing it this way
+// TODO(syang0) we should measure the performance of doing it this way
 // vs taking both the negated and non-negated versions and encoding the smaller
-inline int
-pack(char **buffer, long long int val)
-{
-    if (val >= 0 || val <= int64_t(-(1LL<<56)))
-        return pack<uint64_t>(buffer, static_cast<uint64_t>(val));
-    else
-        return 8 + pack<uint64_t>(buffer, static_cast<uint64_t>(-val));
+inline int pack(char** buffer, long long int val) {
+  if (val >= 0 || val <= int64_t(-(1LL << 56)))
+    return pack<uint64_t>(buffer, static_cast<uint64_t>(val));
+  else
+    return 8 + pack<uint64_t>(buffer, static_cast<uint64_t>(-val));
 }
 
 // The following pack functions that specialize on smaller signed types don't
@@ -194,7 +187,7 @@ pack(char **buffer, int16_t val)
 }
 #endif
 
-    /**
+/**
  * Pointer specialization for the pack template that will copy the value
  * without compression.
  *
@@ -205,10 +198,9 @@ pack(char **buffer, int16_t val)
  *
  * \return - Special 4-bit value indicating how the primitive was packed
  */
-template<typename T>
-inline int
-pack(char **in, T* pointer) {
-    return pack<uint64_t>(in, reinterpret_cast<uint64_t>(pointer));
+template <typename T>
+inline int pack(char** in, T* pointer) {
+  return pack<uint64_t>(in, reinterpret_cast<uint64_t>(pointer));
 }
 
 /**
@@ -222,12 +214,12 @@ pack(char **in, T* pointer) {
  *
  * \return - Special 4-bit value indicating how the primitive was packed
  */
-template<typename T>
+template <typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value, int>::type
-pack(char **buffer, T val) {
-    std::memcpy(*buffer, &val, sizeof(T));
-    *buffer += sizeof(T);
-    return sizeof(T);
+pack(char** buffer, T val) {
+  std::memcpy(*buffer, &val, sizeof(T));
+  *buffer += sizeof(T);
+  return sizeof(T);
 }
 
 /**
@@ -244,49 +236,48 @@ pack(char **buffer, T val) {
  *      original full-width value before compression
  */
 
-template<typename T>
-inline typename std::enable_if<!std::is_floating_point<T>::value &&
-                                !std::is_pointer<T>::value, T>::type
-unpack(const char **in, uint8_t packResult)
-{
-    int64_t packed = 0;
+template <typename T>
+inline typename std::enable_if<
+    !std::is_floating_point<T>::value && !std::is_pointer<T>::value, T>::type
+unpack(const char** in, uint8_t packResult) {
+  int64_t packed = 0;
 
-    if (packResult <= 8) {
-        memcpy(&packed, (*in), packResult);
-        (*in) += packResult;
-       return static_cast<T>(packed);
-    }
+  if (packResult <= 8) {
+    memcpy(&packed, (*in), packResult);
+    (*in) += packResult;
+    return static_cast<T>(packed);
+  }
 
-    int bytes = packResult == 0 ? 16 : (0x0f & (packResult - 8));
-    memcpy(&packed, (*in), bytes);
-    (*in) += bytes;
+  int bytes = packResult == 0 ? 16 : (0x0f & (packResult - 8));
+  memcpy(&packed, (*in), bytes);
+  (*in) += bytes;
 
-    return static_cast<T>(-packed);
+  return static_cast<T>(-packed);
 }
 
-template<typename T>
-inline typename std::enable_if<std::is_pointer<T>::value, T>::type
-unpack(const char **in, uint8_t packNibble) {
-    return (T*)(unpack<uint64_t>(in, packNibble));
+template <typename T>
+inline typename std::enable_if<std::is_pointer<T>::value, T>::type unpack(
+    const char** in, uint8_t packNibble) {
+  return (T*)(unpack<uint64_t>(in, packNibble));
 }
 
-template<typename T>
+template <typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
-unpack(const char **in, uint8_t packNibble) {
-    if (packNibble == sizeof(float)) {
-        float result;
-        std::memcpy(&result, *in, sizeof(float));
-        *in += sizeof(float);
-        return result;
-    }
-
-    // Double case
-    T result;
-    int bytes = packNibble == 0 ? 16 : packNibble;
-    std::memcpy(&result, (*in), bytes);
-    (*in) += bytes;
-
+unpack(const char** in, uint8_t packNibble) {
+  if (packNibble == sizeof(float)) {
+    float result;
+    std::memcpy(&result, *in, sizeof(float));
+    *in += sizeof(float);
     return result;
+  }
+
+  // Double case
+  T result;
+  int bytes = packNibble == 0 ? 16 : packNibble;
+  std::memcpy(&result, (*in), bytes);
+  (*in) += bytes;
+
+  return result;
 }
 
 /**
@@ -301,31 +292,24 @@ unpack(const char **in, uint8_t packNibble) {
  * \return
  *      The number of bytes encoded used to encode the values
  */
-inline static uint32_t
-getSizeOfPackedValues(const TwoNibbles *nibbles, uint32_t numNibbles)
-{
-    uint32_t size = 0;
-    for (uint32_t i = 0; i < numNibbles/2; ++i) {
-        size += nibbles[i].first + nibbles[i].second;
-        if (nibbles[i].first == 0)
-            size += 16;
-        if (nibbles[i].first > 0x8)
-            size -= 8;
-        if (nibbles[i].second == 0)
-            size += 16;
-        if (nibbles[i].second > 0x8)
-            size -= 8;
-    }
+inline static uint32_t getSizeOfPackedValues(const TwoNibbles* nibbles,
+                                             uint32_t numNibbles) {
+  uint32_t size = 0;
+  for (uint32_t i = 0; i < numNibbles / 2; ++i) {
+    size += nibbles[i].first + nibbles[i].second;
+    if (nibbles[i].first == 0) size += 16;
+    if (nibbles[i].first > 0x8) size -= 8;
+    if (nibbles[i].second == 0) size += 16;
+    if (nibbles[i].second > 0x8) size -= 8;
+  }
 
-    if (numNibbles & 0x1) {
-        size += nibbles[numNibbles / 2].first;
-        if (nibbles[numNibbles/2].first == 0)
-            size += 16;
-        if (nibbles[numNibbles/2].first > 0x8)
-            size -= 8;
-    }
+  if (numNibbles & 0x1) {
+    size += nibbles[numNibbles / 2].first;
+    if (nibbles[numNibbles / 2].first == 0) size += 16;
+    if (nibbles[numNibbles / 2].first > 0x8) size -= 8;
+  }
 
-    return size;
+  return size;
 }
 
 /**
@@ -333,80 +317,73 @@ getSizeOfPackedValues(const TwoNibbles *nibbles, uint32_t numNibbles)
  * values as produced by the compressor and unpack()'s them one by one.
  */
 class Nibbler {
-PRIVATE:
-    // Position in the nibble stream
-    const TwoNibbles *nibblePosition;
+  PRIVATE :
+      // Position in the nibble stream
+      const TwoNibbles* nibblePosition;
 
-    // Indicates whether whether to use the first nibble or second
-    bool onFirstNibble;
+  // Indicates whether whether to use the first nibble or second
+  bool onFirstNibble;
 
-    // Number of nibbles in this stream
-    int numNibbles;
+  // Number of nibbles in this stream
+  int numNibbles;
 
-    // Position in the stream marking the next packed value
-    const char *currPackedValue;
+  // Position in the stream marking the next packed value
+  const char* currPackedValue;
 
-    // End of the last valid packed value
-    const char *endOfValues;
+  // End of the last valid packed value
+  const char* endOfValues;
 
-public:
-    /**
-     * Nibbler Constructor
-     *
-     * \param nibbleStart
-     *      Data stream consisting of the Nibbles followed by pack()ed values.
-     * \param numNibbles
-     *      Number of nibbles in the data stream
-     */
-    Nibbler(const char *nibbleStart, int numNibbles)
-        : nibblePosition(reinterpret_cast<const TwoNibbles*>(nibbleStart))
-        , onFirstNibble(true)
-        , numNibbles(numNibbles)
-        , currPackedValue(nibbleStart + (numNibbles + 1)/2)
-        , endOfValues(nullptr)
-    {
-        endOfValues = nibbleStart
-                             + (numNibbles + 1)/2
-                             + getSizeOfPackedValues(nibblePosition, numNibbles);
-    }
+ public:
+  /**
+   * Nibbler Constructor
+   *
+   * \param nibbleStart
+   *      Data stream consisting of the Nibbles followed by pack()ed values.
+   * \param numNibbles
+   *      Number of nibbles in the data stream
+   */
+  Nibbler(const char* nibbleStart, int numNibbles)
+      : nibblePosition(reinterpret_cast<const TwoNibbles*>(nibbleStart)),
+        onFirstNibble(true),
+        numNibbles(numNibbles),
+        currPackedValue(nibbleStart + (numNibbles + 1) / 2),
+        endOfValues(nullptr) {
+    endOfValues = nibbleStart + (numNibbles + 1) / 2 +
+                  getSizeOfPackedValues(nibblePosition, numNibbles);
+  }
 
-    /**
-     * Returns the next pack()-ed value in the stream
-     *
-     * \tparam T
-     *      Type of the value in the stream
-     * \return
-     *      Next pack()-ed value in the stream
-     */
-    template<typename T>
-    T getNext() {
-        assert(currPackedValue < endOfValues);
+  /**
+   * Returns the next pack()-ed value in the stream
+   *
+   * \tparam T
+   *      Type of the value in the stream
+   * \return
+   *      Next pack()-ed value in the stream
+   */
+  template <typename T>
+  T getNext() {
+    assert(currPackedValue < endOfValues);
 
-        uint8_t nibble = (onFirstNibble) ? nibblePosition->first
-                                         : nibblePosition->second;
+    uint8_t nibble =
+        (onFirstNibble) ? nibblePosition->first : nibblePosition->second;
 
-        T ret = unpack<T>(&currPackedValue, nibble);
+    T ret = unpack<T>(&currPackedValue, nibble);
 
-        if (!onFirstNibble)
-            ++nibblePosition;
+    if (!onFirstNibble) ++nibblePosition;
 
-        onFirstNibble = !onFirstNibble;
+    onFirstNibble = !onFirstNibble;
 
-        return ret;
-    }
+    return ret;
+  }
 
-    /**
-     * Returns a pointer to to the first byte beyond the last pack()-ed value
-     *
-     * \return
-     *      Pointer to the first byte beyond last pack()-ed value.
-     */
-    const char *
-    getEndOfPackedArguments() {
-        return endOfValues;
-    }
+  /**
+   * Returns a pointer to to the first byte beyond the last pack()-ed value
+   *
+   * \return
+   *      Pointer to the first byte beyond last pack()-ed value.
+   */
+  const char* getEndOfPackedArguments() { return endOfValues; }
 };
-} /* BufferUtils */
+}  // namespace BufferUtils
 
 #endif /* PACKER_H */
-

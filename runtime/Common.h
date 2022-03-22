@@ -42,24 +42,22 @@ namespace NanoLogInternal {
 // A macro to disallow the copy constructor and operator= functions
 #ifndef DISALLOW_COPY_AND_ASSIGN
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName&) = delete;             \
-    TypeName& operator=(const TypeName&) = delete;
+  TypeName(const TypeName&) = delete;      \
+  TypeName& operator=(const TypeName&) = delete;
 #endif
 
 /**
  * Cast one size of int down to another one.
  * Asserts that no precision is lost at runtime.
  */
-template<typename Small, typename Large>
-inline Small
-downCast(const Large& large)
-{
-    Small small = static_cast<Small>(large);
-    // The following comparison (rather than "large==small") allows
-    // this method to convert between signed and unsigned values.
-    assert(large-small == 0);
-    return small;
+template <typename Small, typename Large>
+inline Small downCast(const Large& large) {
+  Small small = static_cast<Small>(large);
+  // The following comparison (rather than "large==small") allows
+  // this method to convert between signed and unsigned values.
+  assert(large - small == 0);
+  return small;
 }
-}; // namespace NanoLogInternal
+};  // namespace NanoLogInternal
 
 #endif

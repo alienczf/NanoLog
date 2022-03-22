@@ -15,18 +15,17 @@
 #ifndef NANOLOG_CPP17_H
 #define NANOLOG_CPP17_H
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
-
-#include <algorithm>
 #include <iostream>
 #include <utility>
 
 #include "Common.h"
 #include "Cycles.h"
+#include "NanoLog.h"
 #include "Packer.h"
 #include "Portability.h"
-#include "NanoLog.h"
 
 /***
  * This file contains all the C++17 constexpr/templated magic that makes
@@ -53,19 +52,11 @@ namespace NanoLogInternal {
  * \return
  *      true if the character is in the set, indicating the end of the specifier
  */
-constexpr inline bool
-isTerminal(char c)
-{
-    return c == 'd' || c == 'i'
-                || c == 'u' || c == 'o'
-                || c == 'x' || c == 'X'
-                || c == 'f' || c == 'F'
-                || c == 'e' || c == 'E'
-                || c == 'g' || c == 'G'
-                || c == 'a' || c == 'A'
-                || c == 'c' || c == 'p'
-                || c == '%' || c == 's'
-                || c == 'n';
+constexpr inline bool isTerminal(char c) {
+  return c == 'd' || c == 'i' || c == 'u' || c == 'o' || c == 'x' || c == 'X' ||
+         c == 'f' || c == 'F' || c == 'e' || c == 'E' || c == 'g' || c == 'G' ||
+         c == 'a' || c == 'A' || c == 'c' || c == 'p' || c == '%' || c == 's' ||
+         c == 'n';
 }
 
 /**
@@ -78,10 +69,8 @@ isTerminal(char c)
  * \return
  *      true if the character is in the set
  */
-constexpr inline bool
-isFlag(char c)
-{
-    return c == '-' || c == '+' || c == ' ' || c == '#' || c == '0';
+constexpr inline bool isFlag(char c) {
+  return c == '-' || c == '+' || c == ' ' || c == '#' || c == '0';
 }
 
 /**
@@ -94,11 +83,8 @@ isFlag(char c)
  * \return
  *      true if the character is in the set
  */
-constexpr inline bool
-isLength(char c)
-{
-    return c == 'h' || c == 'l' || c == 'j'
-            || c == 'z' ||  c == 't' || c == 'L';
+constexpr inline bool isLength(char c) {
+  return c == 'h' || c == 'l' || c == 'j' || c == 'z' || c == 't' || c == 'L';
 }
 
 /**
@@ -109,10 +95,7 @@ isLength(char c)
  * \return
  *      true if the character is a digit
  */
-constexpr inline bool
-isDigit(char c) {
-    return (c >= '0' && c <= '9');
-}
+constexpr inline bool isDigit(char c) { return (c >= '0' && c <= '9'); }
 
 /**
  * Analyzes a static printf style format string and extracts type information
@@ -128,113 +111,101 @@ isDigit(char c) {
  * \return
  *      Returns an ParamType enum describing the type of the parameter
  */
-template<int N>
-constexpr inline ParamType
-getParamInfo(const char (&fmt)[N],
-             int paramNum=0)
-{
-    int pos = 0;
-    while (pos < N - 1) {
+template <int N>
+constexpr inline ParamType getParamInfo(const char (&fmt)[N],
+                                        int paramNum = 0) {
+  int pos = 0;
+  while (pos < N - 1) {
+    // The code below searches for something that looks like a printf
+    // specifier (i.e. something that follows the format of
+    // %<flags><width>.<precision><length><terminal>). We only care
+    // about precision and type, so everything else is ignored.
+    if (fmt[pos] != '%') {
+      ++pos;
+      continue;
+    } else {
+      // Note: gcc++ 5,6,7,8 seems to hang whenever one uses the construct
+      // "if (...) {... continue; }" without an else in constexpr
+      // functions. Hence, we have the code here wrapped in an else {...}
+      // I reported this bug to the developers here
+      // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86767
+      ++pos;
 
-        // The code below searches for something that looks like a printf
-        // specifier (i.e. something that follows the format of
-        // %<flags><width>.<precision><length><terminal>). We only care
-        // about precision and type, so everything else is ignored.
-        if (fmt[pos] != '%') {
-            ++pos;
-            continue;
+      // Two %'s in a row => Comment
+      if (fmt[pos] == '%') {
+        ++pos;
+        continue;
+      } else {
+        // Consume flags
+        while (NanoLogInternal::isFlag(fmt[pos])) ++pos;
+
+        // Consume width
+        if (fmt[pos] == '*') {
+          if (paramNum == 0) return ParamType::DYNAMIC_WIDTH;
+
+          --paramNum;
+          ++pos;
         } else {
-            // Note: gcc++ 5,6,7,8 seems to hang whenever one uses the construct
-            // "if (...) {... continue; }" without an else in constexpr
-            // functions. Hence, we have the code here wrapped in an else {...}
-            // I reported this bug to the developers here
-            // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86767
-            ++pos;
-
-            // Two %'s in a row => Comment
-            if (fmt[pos] == '%') {
-                ++pos;
-                continue;
-            } else {
-
-                // Consume flags
-                while (NanoLogInternal::isFlag(fmt[pos]))
-                    ++pos;
-
-                // Consume width
-                if (fmt[pos] == '*') {
-                    if (paramNum == 0)
-                        return ParamType::DYNAMIC_WIDTH;
-
-                    --paramNum;
-                    ++pos;
-                } else {
-                    while (NanoLogInternal::isDigit(fmt[pos]))
-                        ++pos;
-                }
-
-                // Consume precision
-                bool hasDynamicPrecision = false;
-                int precision = -1;
-                if (fmt[pos] == '.') {
-                    ++pos;  // consume '.'
-
-                    if (fmt[pos] == '*') {
-                        if (paramNum == 0)
-                            return ParamType::DYNAMIC_PRECISION;
-
-                        hasDynamicPrecision = true;
-                        --paramNum;
-                        ++pos;
-                    } else {
-                        precision = 0;
-                        while (NanoLogInternal::isDigit(fmt[pos])) {
-                            precision = 10*precision + (fmt[pos] - '0');
-                            ++pos;
-                        }
-                    }
-                }
-
-                // consume length
-                while (isLength(fmt[pos]))
-                    ++pos;
-
-                // Consume terminal
-                if (!NanoLogInternal::isTerminal(fmt[pos])) {
-                    throw std::invalid_argument(
-                            "Unrecognized format specifier after %");
-                }
-
-                // Fail on %n specifiers (i.e. store position to address) since
-                // we cannot know the position without formatting.
-                if (fmt[pos] == 'n') {
-                    throw std::invalid_argument(
-                            "%n specifiers are not support in NanoLog!");
-                }
-
-                if (paramNum != 0) {
-                    --paramNum;
-                    ++pos;
-                    continue;
-                } else {
-                    if (fmt[pos] != 's')
-                        return ParamType::NON_STRING;
-
-                    if (hasDynamicPrecision)
-                        return ParamType::STRING_WITH_DYNAMIC_PRECISION;
-
-                    if (precision == -1)
-                        return ParamType::STRING_WITH_NO_PRECISION;
-                    else
-                        return ParamType(precision);
-                }
-            }
+          while (NanoLogInternal::isDigit(fmt[pos])) ++pos;
         }
+
+        // Consume precision
+        bool hasDynamicPrecision = false;
+        int precision = -1;
+        if (fmt[pos] == '.') {
+          ++pos;  // consume '.'
+
+          if (fmt[pos] == '*') {
+            if (paramNum == 0) return ParamType::DYNAMIC_PRECISION;
+
+            hasDynamicPrecision = true;
+            --paramNum;
+            ++pos;
+          } else {
+            precision = 0;
+            while (NanoLogInternal::isDigit(fmt[pos])) {
+              precision = 10 * precision + (fmt[pos] - '0');
+              ++pos;
+            }
+          }
+        }
+
+        // consume length
+        while (isLength(fmt[pos])) ++pos;
+
+        // Consume terminal
+        if (!NanoLogInternal::isTerminal(fmt[pos])) {
+          throw std::invalid_argument("Unrecognized format specifier after %");
+        }
+
+        // Fail on %n specifiers (i.e. store position to address) since
+        // we cannot know the position without formatting.
+        if (fmt[pos] == 'n') {
+          throw std::invalid_argument(
+              "%n specifiers are not support in NanoLog!");
+        }
+
+        if (paramNum != 0) {
+          --paramNum;
+          ++pos;
+          continue;
+        } else {
+          if (fmt[pos] != 's') return ParamType::NON_STRING;
+
+          if (hasDynamicPrecision)
+            return ParamType::STRING_WITH_DYNAMIC_PRECISION;
+
+          if (precision == -1)
+            return ParamType::STRING_WITH_NO_PRECISION;
+          else
+            return ParamType(precision);
+        }
+      }
     }
+  }
 
-    return ParamType::INVALID;
+  return ParamType::INVALID;
 }
-
 
 /**
  * Helper to analyzeFormatString. This level of indirection is needed to
@@ -253,13 +224,11 @@ getParamInfo(const char (&fmt)[N],
  * \return
  *      An std::array describing the types at each index (zero based).
  */
-template<int N, std::size_t... Indices>
-constexpr std::array<ParamType, sizeof...(Indices)>
-analyzeFormatStringHelper(const char (&fmt)[N], std::index_sequence<Indices...>)
-{
-    return {{ getParamInfo(fmt, Indices)... }};
+template <int N, std::size_t... Indices>
+constexpr std::array<ParamType, sizeof...(Indices)> analyzeFormatStringHelper(
+    const char (&fmt)[N], std::index_sequence<Indices...>) {
+  return {{getParamInfo(fmt, Indices)...}};
 }
-
 
 /**
  * Computes a ParamType array describing the parameters that would be used
@@ -281,11 +250,10 @@ analyzeFormatStringHelper(const char (&fmt)[N], std::index_sequence<Indices...>)
  *      An std::array where the n-th index indicates that the
  *      n-th format parameter is a "%s" or not.
  */
-template<int NParams, size_t N>
-constexpr std::array<ParamType, NParams>
-analyzeFormatString(const char (&fmt)[N])
-{
-    return analyzeFormatStringHelper(fmt, std::make_index_sequence<NParams>{});
+template <int NParams, size_t N>
+constexpr std::array<ParamType, NParams> analyzeFormatString(
+    const char (&fmt)[N]) {
+  return analyzeFormatStringHelper(fmt, std::make_index_sequence<NParams>{});
 }
 
 /**
@@ -304,14 +272,11 @@ analyzeFormatString(const char (&fmt)[N])
  *
  * @return
  */
-template<int N>
-constexpr inline int
-countFmtParams(const char (&fmt)[N])
-{
-    int count = 0;
-    while (getParamInfo(fmt, count) != ParamType::INVALID)
-        ++count;
-    return count;
+template <int N>
+constexpr inline int countFmtParams(const char (&fmt)[N]) {
+  int count = 0;
+  while (getParamInfo(fmt, count) != ParamType::INVALID) ++count;
+  return count;
 }
 
 /**
@@ -327,18 +292,16 @@ countFmtParams(const char (&fmt)[N])
  * \return
  *      Number of non-string specifiers in the format string
  */
-template<size_t N>
-constexpr int
-getNumNibblesNeeded(const char (&fmt)[N])
-{
-    int numNibbles = 0;
-    for (int i = 0; i < countFmtParams(fmt); ++i) {
-        ParamType t = getParamInfo(fmt, i);
-        if (t == NON_STRING || t == DYNAMIC_PRECISION || t == DYNAMIC_WIDTH)
-            ++numNibbles;
-    }
+template <size_t N>
+constexpr int getNumNibblesNeeded(const char (&fmt)[N]) {
+  int numNibbles = 0;
+  for (int i = 0; i < countFmtParams(fmt); ++i) {
+    ParamType t = getParamInfo(fmt, i);
+    if (t == NON_STRING || t == DYNAMIC_PRECISION || t == DYNAMIC_WIDTH)
+      ++numNibbles;
+  }
 
-    return numNibbles;
+  return numNibbles;
 }
 
 /**
@@ -365,74 +328,66 @@ getNumNibblesNeeded(const char (&fmt)[N])
  * \param stringSize
  *      Stores the byte length of the argument, if it is a string (unused here)
  */
-template<typename T>
-inline
-typename std::enable_if<!std::is_same<T, const wchar_t*>::value
-                        && !std::is_same<T, const char*>::value
-                        && !std::is_same<T, wchar_t*>::value
-                        && !std::is_same<T, char*>::value
-                        , void>::type
-store_argument(char **storage,
-               T arg,
-               ParamType paramType,
-               size_t stringSize)
-{
-    std::memcpy(*storage, &arg, sizeof(T));
-    *storage += sizeof(T);
+template <typename T>
+inline typename std::enable_if<!std::is_same<T, const wchar_t*>::value &&
+                                   !std::is_same<T, const char*>::value &&
+                                   !std::is_same<T, wchar_t*>::value &&
+                                   !std::is_same<T, char*>::value,
+                               void>::type
+store_argument(char** storage, T arg, ParamType paramType, size_t stringSize) {
+  std::memcpy(*storage, &arg, sizeof(T));
+  *storage += sizeof(T);
 
-    #ifdef ENABLE_DEBUG_PRINTING
-        printf("\tRBasic  [%p]= ", dest);
-        std::cout << *dest << "\r\n";
-    #endif
+#ifdef ENABLE_DEBUG_PRINTING
+  printf("\tRBasic  [%p]= ", dest);
+  std::cout << *dest << "\r\n";
+#endif
 }
 
 // string specialization of the above
-template<typename T>
-inline
-typename std::enable_if<std::is_same<T, const wchar_t*>::value
-                        || std::is_same<T, const char*>::value
-                        || std::is_same<T, wchar_t*>::value
-                        || std::is_same<T, char*>::value
-                        , void>::type
-store_argument(char **storage,
-               T arg,
-               const ParamType paramType,
-               const size_t stringSize)
-{
-    // If the printf style format string's specifier says the arg is not
-    // a string, we save it as a pointer instead
-    if (paramType <= ParamType::NON_STRING) {
-        store_argument<const void*>(storage, static_cast<const void*>(arg),
-                                    paramType, stringSize);
-        return;
-    }
+template <typename T>
+inline typename std::enable_if<std::is_same<T, const wchar_t*>::value ||
+                                   std::is_same<T, const char*>::value ||
+                                   std::is_same<T, wchar_t*>::value ||
+                                   std::is_same<T, char*>::value,
+                               void>::type
+store_argument(char** storage, T arg, const ParamType paramType,
+               const size_t stringSize) {
+  // If the printf style format string's specifier says the arg is not
+  // a string, we save it as a pointer instead
+  if (paramType <= ParamType::NON_STRING) {
+    store_argument<const void*>(storage, static_cast<const void*>(arg),
+                                paramType, stringSize);
+    return;
+  }
 
-    // Since we've already paid the cost to find the string length earlier,
-    // might as well save it in the stream so that the compression function
-    // can later avoid another strlen/wsclen invocation.
-    if(stringSize > std::numeric_limits<uint32_t>::max())
-    {
-        throw std::invalid_argument("Strings larger than std::numeric_limits<uint32_t>::max() are unsupported");
-    }
-    auto size = static_cast<uint32_t>(stringSize);
-    std::memcpy(*storage, &size, sizeof(uint32_t));
-    *storage += sizeof(uint32_t);
+  // Since we've already paid the cost to find the string length earlier,
+  // might as well save it in the stream so that the compression function
+  // can later avoid another strlen/wsclen invocation.
+  if (stringSize > std::numeric_limits<uint32_t>::max()) {
+    throw std::invalid_argument(
+        "Strings larger than std::numeric_limits<uint32_t>::max() are "
+        "unsupported");
+  }
+  auto size = static_cast<uint32_t>(stringSize);
+  std::memcpy(*storage, &size, sizeof(uint32_t));
+  *storage += sizeof(uint32_t);
 
 #ifdef ENABLE_DEBUG_PRINTING
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 #pragma GCC diagnostic ignored "-Wformat"
-        if (sizeof(typename std::remove_pointer<T>::type) == 1) {
-            printf("\tRString[%p-%u]= %s\r\n", *buffer, size, arg);
-        } else {
-            printf("\tRWString[%p-%u]= %ls\r\n", *buffer, size, arg);
-        }
+  if (sizeof(typename std::remove_pointer<T>::type) == 1) {
+    printf("\tRString[%p-%u]= %s\r\n", *buffer, size, arg);
+  } else {
+    printf("\tRWString[%p-%u]= %ls\r\n", *buffer, size, arg);
+  }
 #pragma GCC diagnostic pop
 #endif
 
-    memcpy(*storage, arg, stringSize);
-    *storage += stringSize;
-    return;
+  memcpy(*storage, arg, stringSize);
+  *storage += stringSize;
+  return;
 }
 
 /**
@@ -465,30 +420,23 @@ store_argument(char **storage,
  * \param rest
  *      Rest of the remaining variable number of arguments
  */
-template<int argNum = 0, unsigned long N, int M, typename T1, typename... Ts>
-inline void
-store_arguments(const std::array<ParamType, N>& paramTypes,
-                size_t (&stringBytes)[M],
-                char **storage,
-                T1 head,
-                Ts... rest)
-{
-    // Peel off one argument to store, and then recursively process rest
-    store_argument(storage, head, paramTypes[argNum], stringBytes[argNum]);
-    store_arguments<argNum + 1>(paramTypes, stringBytes, storage, rest...);
+template <int argNum = 0, unsigned long N, int M, typename T1, typename... Ts>
+inline void store_arguments(const std::array<ParamType, N>& paramTypes,
+                            size_t (&stringBytes)[M], char** storage, T1 head,
+                            Ts... rest) {
+  // Peel off one argument to store, and then recursively process rest
+  store_argument(storage, head, paramTypes[argNum], stringBytes[argNum]);
+  store_arguments<argNum + 1>(paramTypes, stringBytes, storage, rest...);
 }
 
 /**
  * Specialization of store_arguments that processes no arguments, i.e. this
  * is the end of the head/rest recursion. See above for full documentation.
  */
-template<int argNum = 0, unsigned long N, int M>
-inline void
-store_arguments(const std::array<ParamType, N>&,
-                size_t (&stringSizes)[M],
-                char **)
-{
-    // No arguments, do nothing.
+template <int argNum = 0, unsigned long N, int M>
+inline void store_arguments(const std::array<ParamType, N>&,
+                            size_t (&stringSizes)[M], char**) {
+  // No arguments, do nothing.
 }
 
 /**
@@ -507,24 +455,21 @@ store_arguments(const std::array<ParamType, N>&,
  * \return
  *      t as a uint64_t if it's convertible, otherwise a 0.
  */
-template<typename T>
-inline
-typename std::enable_if<std::is_convertible<T, uint64_t>::value
-                        && !std::is_floating_point<T>::value
-                        , uint64_t>::type
+template <typename T>
+inline typename std::enable_if<std::is_convertible<T, uint64_t>::value &&
+                                   !std::is_floating_point<T>::value,
+                               uint64_t>::type
 as_uint64_t(T t) {
-    return t;
+  return t;
 }
 
-template<typename T>
-inline
-typename std::enable_if<!std::is_convertible<T, uint64_t>::value
-                        || std::is_floating_point<T>::value
-                        , uint64_t>::type
+template <typename T>
+inline typename std::enable_if<!std::is_convertible<T, uint64_t>::value ||
+                                   std::is_floating_point<T>::value,
+                               uint64_t>::type
 as_uint64_t(T t) {
-    return 0;
+  return 0;
 }
-
 
 /**
  * For a single non-string, non-void pointer argument, return the number
@@ -548,36 +493,27 @@ as_uint64_t(T t) {
  * \return
  *      Size of the full-width argument without compression
  */
-template<typename T>
-inline
-typename std::enable_if<!std::is_same<T, const wchar_t*>::value
-                        && !std::is_same<T, const char*>::value
-                        && !std::is_same<T, wchar_t*>::value
-                        && !std::is_same<T, char*>::value
-                        && !std::is_same<T, const void*>::value
-                        && !std::is_same<T, void*>::value
-                        , size_t>::type
-getArgSize(const ParamType fmtType,
-           uint64_t &previousPrecision,
-           size_t &stringSize,
-           T arg)
-{
-    if (fmtType == ParamType::DYNAMIC_PRECISION)
-        previousPrecision = as_uint64_t(arg);
+template <typename T>
+inline typename std::enable_if<
+    !std::is_same<T, const wchar_t*>::value &&
+        !std::is_same<T, const char*>::value &&
+        !std::is_same<T, wchar_t*>::value && !std::is_same<T, char*>::value &&
+        !std::is_same<T, const void*>::value && !std::is_same<T, void*>::value,
+    size_t>::type
+getArgSize(const ParamType fmtType, uint64_t& previousPrecision,
+           size_t& stringSize, T arg) {
+  if (fmtType == ParamType::DYNAMIC_PRECISION)
+    previousPrecision = as_uint64_t(arg);
 
-    return sizeof(T);
+  return sizeof(T);
 }
 
 /**
  * "void *" specialization for getArgSize. (See documentation above).
  */
-inline size_t
-getArgSize(const ParamType,
-           uint64_t &previousPrecision,
-           size_t &stringSize,
-           const void*)
-{
-    return sizeof(void*);
+inline size_t getArgSize(const ParamType, uint64_t& previousPrecision,
+                         size_t& stringSize, const void*) {
+  return sizeof(void*);
 }
 
 /**
@@ -600,62 +536,52 @@ getArgSize(const ParamType,
  * \return
  *      Length of the string str with a uint32_t length and no NULL terminator
  */
-inline size_t
-getArgSize(const ParamType fmtType,
-           uint64_t &previousPrecision,
-           size_t &stringBytes,
-           const char* str)
-{
-    if (fmtType <= ParamType::NON_STRING)
-        return sizeof(void*);
+inline size_t getArgSize(const ParamType fmtType, uint64_t& previousPrecision,
+                         size_t& stringBytes, const char* str) {
+  if (fmtType <= ParamType::NON_STRING) return sizeof(void*);
 
-    stringBytes = strlen(str);
-    uint32_t fmtLength = static_cast<uint32_t>(fmtType);
+  stringBytes = strlen(str);
+  uint32_t fmtLength = static_cast<uint32_t>(fmtType);
 
-    // Strings with static length specifiers (ex %.10s), have non-negative
-    // ParamTypes equal to the static length. Thus, we use that value to
-    // truncate the string as necessary.
-    if (fmtType >= ParamType::STRING && stringBytes > fmtLength)
-        stringBytes = fmtLength;
+  // Strings with static length specifiers (ex %.10s), have non-negative
+  // ParamTypes equal to the static length. Thus, we use that value to
+  // truncate the string as necessary.
+  if (fmtType >= ParamType::STRING && stringBytes > fmtLength)
+    stringBytes = fmtLength;
 
-    // If the string had a dynamic precision specified (i.e. %.*s), use
-    // the previous parameter as the precision and truncate as necessary.
-    else if (fmtType == ParamType::STRING_WITH_DYNAMIC_PRECISION &&
-                stringBytes > previousPrecision)
-        stringBytes = previousPrecision;
+  // If the string had a dynamic precision specified (i.e. %.*s), use
+  // the previous parameter as the precision and truncate as necessary.
+  else if (fmtType == ParamType::STRING_WITH_DYNAMIC_PRECISION &&
+           stringBytes > previousPrecision)
+    stringBytes = previousPrecision;
 
-    return stringBytes + sizeof(uint32_t);
+  return stringBytes + sizeof(uint32_t);
 }
 
 /**
  * Wide-character string specialization of the above.
  */
-inline size_t
-getArgSize(const ParamType fmtType,
-            uint64_t &previousPrecision,
-            size_t &stringBytes,
-            const wchar_t* wstr)
-{
-    if (fmtType <= ParamType::NON_STRING)
-        return sizeof(void*);
+inline size_t getArgSize(const ParamType fmtType, uint64_t& previousPrecision,
+                         size_t& stringBytes, const wchar_t* wstr) {
+  if (fmtType <= ParamType::NON_STRING) return sizeof(void*);
 
-    stringBytes = wcslen(wstr);
-    uint32_t fmtLength = static_cast<uint32_t>(fmtType);
+  stringBytes = wcslen(wstr);
+  uint32_t fmtLength = static_cast<uint32_t>(fmtType);
 
-    // Strings with static length specifiers (ex %.10s), have non-negative
-    // ParamTypes equal to the static length. Thus, we use that value to
-    // truncate the string as necessary.
-    if (fmtType >= ParamType::STRING && stringBytes > fmtLength)
-        stringBytes = fmtLength;
+  // Strings with static length specifiers (ex %.10s), have non-negative
+  // ParamTypes equal to the static length. Thus, we use that value to
+  // truncate the string as necessary.
+  if (fmtType >= ParamType::STRING && stringBytes > fmtLength)
+    stringBytes = fmtLength;
 
-    // If the string had a dynamic precision specified (i.e. %.*s), use
-    // the previous parameter as the precision and truncate as necessary.
-    else if (fmtType == ParamType::STRING_WITH_DYNAMIC_PRECISION &&
-             stringBytes > previousPrecision)
-        stringBytes = previousPrecision;
+  // If the string had a dynamic precision specified (i.e. %.*s), use
+  // the previous parameter as the precision and truncate as necessary.
+  else if (fmtType == ParamType::STRING_WITH_DYNAMIC_PRECISION &&
+           stringBytes > previousPrecision)
+    stringBytes = previousPrecision;
 
-    stringBytes *= sizeof(wchar_t);
-    return stringBytes + sizeof(uint32_t);
+  stringBytes *= sizeof(wchar_t);
+  return stringBytes + sizeof(uint32_t);
 }
 
 /**
@@ -696,28 +622,24 @@ getArgSize(const ParamType fmtType,
  *      Total number of bytes needed to represent all arguments with no
  *      compression in the NanoLog system.
  */
-template<int argNum = 0, unsigned long N, int M, typename T1, typename... Ts>
-inline size_t
-getArgSizes(const std::array<ParamType, N>& argFmtTypes,
-            uint64_t &previousPrecision,
-            size_t (&stringSizes)[M],
-            T1 head, Ts... rest)
-{
-    return getArgSize(argFmtTypes[argNum], previousPrecision,
-                                                    stringSizes[argNum], head)
-           + getArgSizes<argNum + 1>(argFmtTypes, previousPrecision,
-                                                    stringSizes, rest...);
+template <int argNum = 0, unsigned long N, int M, typename T1, typename... Ts>
+inline size_t getArgSizes(const std::array<ParamType, N>& argFmtTypes,
+                          uint64_t& previousPrecision, size_t (&stringSizes)[M],
+                          T1 head, Ts... rest) {
+  return getArgSize(argFmtTypes[argNum], previousPrecision, stringSizes[argNum],
+                    head) +
+         getArgSizes<argNum + 1>(argFmtTypes, previousPrecision, stringSizes,
+                                 rest...);
 }
 
 /**
  * Specialization for getArgSizes when there are no arguments, i.e. it is
  * the end of the recursion. (See above for documentation)
  */
-template<int argNum = 0, unsigned long N, int M>
-inline size_t
-getArgSizes(const std::array<ParamType, N>&, uint64_t &, size_t (&)[M])
-{
-    return 0;
+template <int argNum = 0, unsigned long N, int M>
+inline size_t getArgSizes(const std::array<ParamType, N>&, uint64_t&,
+                          size_t (&)[M]) {
+  return 0;
 }
 
 /**
@@ -741,77 +663,70 @@ getArgSizes(const std::array<ParamType, N>&, uint64_t &, size_t (&)[M])
  * \param[in/out out
  *      Output buffer to write the compressed results to
  */
-template<typename T>
-inline void
-compressSingle(BufferUtils::TwoNibbles* nibbles,
-                int *nibbleCnt,
-                const ParamType paramType,
-                bool stringsOnly,
-                char **in,
-                char **out)
-{
-    if (paramType > ParamType::NON_STRING) {
-        uint32_t stringBytes;
-        std::memcpy(&stringBytes, *in, sizeof(uint32_t));
-        *in += sizeof(uint32_t);
+template <typename T>
+inline void compressSingle(BufferUtils::TwoNibbles* nibbles, int* nibbleCnt,
+                           const ParamType paramType, bool stringsOnly,
+                           char** in, char** out) {
+  if (paramType > ParamType::NON_STRING) {
+    uint32_t stringBytes;
+    std::memcpy(&stringBytes, *in, sizeof(uint32_t));
+    *in += sizeof(uint32_t);
 
-        // Skipping strings
-        if (!stringsOnly) {
-            *in += stringBytes;
-            return;
-        }
+    // Skipping strings
+    if (!stringsOnly) {
+      *in += stringBytes;
+      return;
+    }
 
 #ifdef ENABLE_DEBUG_PRINTING
-        printf("\tCString [%p->%p-%u]\r\n", *in, *out, stringBytes);
+    printf("\tCString [%p->%p-%u]\r\n", *in, *out, stringBytes);
 #endif
 
-        memcpy(*out, *in, stringBytes);
-        *in += stringBytes;
-        *out += stringBytes;
+    memcpy(*out, *in, stringBytes);
+    *in += stringBytes;
+    *out += stringBytes;
 
-        // Switch to null terminated strings in the compressed output to
-        // save space. The length was explicitly encoded previously in the
-        // uncompressed format to allow the two-pass compression function
-        // to quickly skip strings in the stringsOnly=false pass.
+    // Switch to null terminated strings in the compressed output to
+    // save space. The length was explicitly encoded previously in the
+    // uncompressed format to allow the two-pass compression function
+    // to quickly skip strings in the stringsOnly=false pass.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-arith"
-        constexpr uint32_t characterWidth = [](){
-            if constexpr(std::is_same_v<std::decay_t<std::remove_pointer_t<T>>, void>)
-            {
-                return sizeof(void *);
-            }
-            else
-            {
-                return sizeof(typename std::remove_pointer<T>::type);
-            }
-        }();
+    constexpr uint32_t characterWidth = []() {
+      if constexpr (std::is_same_v<std::decay_t<std::remove_pointer_t<T>>,
+                                   void>) {
+        return sizeof(void*);
+      } else {
+        return sizeof(typename std::remove_pointer<T>::type);
+      }
+    }();
 #pragma GCC diagnostic pop
 
-        bzero(*out, characterWidth);
-        *out += characterWidth;
-        return;
-    }
+    bzero(*out, characterWidth);
+    *out += characterWidth;
+    return;
+  }
 
-    // Don't store basic types if we're just processing strings
-    if (stringsOnly) {
-        *in += sizeof(T);
-        return;
-    }
+  // Don't store basic types if we're just processing strings
+  if (stringsOnly) {
+    *in += sizeof(T);
+    return;
+  }
 
-    T argument;
-    std::memcpy(&argument, *in, sizeof(T));
+  T argument;
+  std::memcpy(&argument, *in, sizeof(T));
 
 #ifdef ENABLE_DEBUG_PRINTING
-    printf("\tCBasic  [%p->%p]= ", *in, *out);
-    std::cout << argument << "\r\n";
+  printf("\tCBasic  [%p->%p]= ", *in, *out);
+  std::cout << argument << "\r\n";
 #endif
-    if (*nibbleCnt & 0x1)
-        nibbles[*nibbleCnt/2].second = 0xf & BufferUtils::pack(out, argument);
-    else
-        nibbles[*nibbleCnt/2].first = 0xf & BufferUtils::pack(out, argument);
+  if (*nibbleCnt & 0x1)
+    nibbles[*nibbleCnt / 2].second = 0xf & BufferUtils::pack(out, argument);
+  else
+    nibbles[*nibbleCnt / 2].first = 0xf & BufferUtils::pack(out, argument);
 
-    ++(*nibbleCnt);
-    *in += sizeof(T);
+  ++(*nibbleCnt);
+  *in += sizeof(T);
 }
 
 /**
@@ -825,10 +740,10 @@ compressSingle(BufferUtils::TwoNibbles* nibbles,
  *
  * https://stackoverflow.com/questions/23443511/how-to-match-empty-arguments-pack-in-variadic-template
  */
-template<typename... Ts>
-NANOLOG_ALWAYS_INLINE
-void compress_internal(BufferUtils::TwoNibbles*, int,
-                       const bool*, bool, int, char **, char **);
+template <typename... Ts>
+NANOLOG_ALWAYS_INLINE void compress_internal(BufferUtils::TwoNibbles*, int,
+                                             const bool*, bool, int, char**,
+                                             char**);
 
 /**
  * Recursively peels off an argument from an argument pack and compresses
@@ -855,45 +770,39 @@ void compress_internal(BufferUtils::TwoNibbles*, int,
  * \param[in/out out
  *      Output buffer to write the compressed results to
  */
-template<typename T1, typename... Ts>
-NANOLOG_ALWAYS_INLINE
-void compressHelper(BufferUtils::TwoNibbles *nibbles,
-                    int nibbleCnt,
-                    const ParamType *paramTypes,
-                    bool stringsOnly,
-                    int argNum,
-                    char **in,
-                    char **out)
-{
-    // Peel off the first argument, and recursively process the rest
-    compressSingle<T1>(nibbles, &nibbleCnt, paramTypes[argNum], stringsOnly,
-                       in, out);
-    compress_internal<Ts...>(nibbles, nibbleCnt, paramTypes, stringsOnly,
-                                argNum + 1, in, out);
+template <typename T1, typename... Ts>
+NANOLOG_ALWAYS_INLINE void compressHelper(BufferUtils::TwoNibbles* nibbles,
+                                          int nibbleCnt,
+                                          const ParamType* paramTypes,
+                                          bool stringsOnly, int argNum,
+                                          char** in, char** out) {
+  // Peel off the first argument, and recursively process the rest
+  compressSingle<T1>(nibbles, &nibbleCnt, paramTypes[argNum], stringsOnly, in,
+                     out);
+  compress_internal<Ts...>(nibbles, nibbleCnt, paramTypes, stringsOnly,
+                           argNum + 1, in, out);
 }
 
-
-template<typename... Ts>
-NANOLOG_ALWAYS_INLINE 
-void compress_internal(BufferUtils::TwoNibbles *nibbles, int nibbleCnt,
-                       const ParamType *isArgString, bool stringsOnly, int argNum,
-                       char **in, char **out)
-{
-    compressHelper<Ts...>(nibbles, nibbleCnt, isArgString, stringsOnly,
-                                argNum, in, out);
+template <typename... Ts>
+NANOLOG_ALWAYS_INLINE void compress_internal(BufferUtils::TwoNibbles* nibbles,
+                                             int nibbleCnt,
+                                             const ParamType* isArgString,
+                                             bool stringsOnly, int argNum,
+                                             char** in, char** out) {
+  compressHelper<Ts...>(nibbles, nibbleCnt, isArgString, stringsOnly, argNum,
+                        in, out);
 }
 
-template<>
-NANOLOG_ALWAYS_INLINE 
-void compress_internal(BufferUtils::TwoNibbles *nibbles, int nibbleCnt,
-                       const ParamType *isArgString, bool stringsOnly, int argNum,
-                       char **in, char **out)
-{
-    // This is a catch for compress when the template arguments are empty,
-    // in which case we do nothing. This is needed since the head/tail pack
-    // expansion used above will always end with Ts = {}
+template <>
+NANOLOG_ALWAYS_INLINE void compress_internal(BufferUtils::TwoNibbles* nibbles,
+                                             int nibbleCnt,
+                                             const ParamType* isArgString,
+                                             bool stringsOnly, int argNum,
+                                             char** in, char** out) {
+  // This is a catch for compress when the template arguments are empty,
+  // in which case we do nothing. This is needed since the head/tail pack
+  // expansion used above will always end with Ts = {}
 }
-
 
 /**
  * Consumes the raw log format parameters in the input buffer and compresses
@@ -915,44 +824,44 @@ void compress_internal(BufferUtils::TwoNibbles *nibbles, int nibbleCnt,
  * \param[in/out out
  *      Output buffer to write the compressed results to
  */
-template<typename... Ts>
-inline void
-compress(int numNibbles, const ParamType *paramTypes, char **input, char **output) {
-    char *in = *input;
-    char *out = *output;
+template <typename... Ts>
+inline void compress(int numNibbles, const ParamType* paramTypes, char** input,
+                     char** output) {
+  char* in = *input;
+  char* out = *output;
 
-    // Compress the arguments into a format that looks something like:
-    // <Nibbles>
-    // <Non-String types>
-    // <string types with null-terminator>
-    auto *nibbles = reinterpret_cast<BufferUtils::TwoNibbles*>(out);
-    out += (numNibbles + 1)/2;
+  // Compress the arguments into a format that looks something like:
+  // <Nibbles>
+  // <Non-String types>
+  // <string types with null-terminator>
+  auto* nibbles = reinterpret_cast<BufferUtils::TwoNibbles*>(out);
+  out += (numNibbles + 1) / 2;
 
 #ifdef ENABLE_DEBUG_PRINTING
-    printf("\tisArgString [%p] = ", isArgString);
-    for (size_t i = 0; i < sizeof...(Ts); ++i) {
-        printf("%d ", isArgString[i]);
-    }
-    printf("\r\n");
+  printf("\tisArgString [%p] = ", isArgString);
+  for (size_t i = 0; i < sizeof...(Ts); ++i) {
+    printf("%d ", isArgString[i]);
+  }
+  printf("\r\n");
 #endif
 
-    // This method of passing in stack-copies of the input/output pointers
-    // seems to allow the compiler to generate much more optimized code.
-    // The alternative of passing **input/**output directly into
-    // compress_internal generate 4x more instructions on g++ 4.9.2, slowing
-    // down the operation. My suspicion is that the compiler can more
-    // aggressively optimize the compress_internal functions when it KNOWS
-    // it has exclusive access to the indirection pointers.
-    compress_internal<Ts...>(nibbles, 0, paramTypes, false, 0,  &in, &out);
-    in = *input;
+  // This method of passing in stack-copies of the input/output pointers
+  // seems to allow the compiler to generate much more optimized code.
+  // The alternative of passing **input/**output directly into
+  // compress_internal generate 4x more instructions on g++ 4.9.2, slowing
+  // down the operation. My suspicion is that the compiler can more
+  // aggressively optimize the compress_internal functions when it KNOWS
+  // it has exclusive access to the indirection pointers.
+  compress_internal<Ts...>(nibbles, 0, paramTypes, false, 0, &in, &out);
+  in = *input;
 
-    // We make two passes through the arguments, once processing only the
-    // non-string types and a second processing only strings. This produces
-    // an encoding that keeps all the nibbles closely packed together and
-    // is compatible with the legacy pre-processor based NanoLog system.
-    compress_internal<Ts...>(nibbles, 0, paramTypes, true, 0,  &in, &out);
-    *input = in;
-    *output = out;
+  // We make two passes through the arguments, once processing only the
+  // non-string types and a second processing only strings. This produces
+  // an encoding that keeps all the nibbles closely packed together and
+  // is compatible with the legacy pre-processor based NanoLog system.
+  compress_internal<Ts...>(nibbles, 0, paramTypes, true, 0, &in, &out);
+  *input = in;
+  *output = out;
 }
 
 /**
@@ -991,59 +900,48 @@ compress(int numNibbles, const ParamType *paramTypes, char **input, char **outpu
  * \param args
  *      Argument pack for all the arguments for the log invocation
  */
-template<long unsigned int N, int M, typename... Ts>
-inline void
-log(int &logId,
-    const char *filename,
-    const int linenum,
-    const LogLevel severity,
-    const char (&format)[M],
-    const int numNibbles,
-    const std::array<ParamType, N>& paramTypes,
-    Ts... args)
-{
-    using namespace NanoLogInternal::Log;
-    assert(N == static_cast<uint32_t>(sizeof...(Ts)));
+template <long unsigned int N, int M, typename... Ts>
+inline void log(int& logId, const char* filename, const int linenum,
+                const LogLevel severity, const char (&format)[M],
+                const int numNibbles,
+                const std::array<ParamType, N>& paramTypes, Ts... args) {
+  using namespace NanoLogInternal::Log;
+  assert(N == static_cast<uint32_t>(sizeof...(Ts)));
 
-    if (logId == UNASSIGNED_LOGID) {
-        const ParamType *array = paramTypes.data();
-        StaticLogInfo info(&compress<Ts...>,
-                        filename,
-                        linenum,
-                        severity,
-                        format,
-                        sizeof...(Ts),
-                        numNibbles,
-                        array);
+  if (logId == UNASSIGNED_LOGID) {
+    const ParamType* array = paramTypes.data();
+    StaticLogInfo info(&compress<Ts...>, filename, linenum, severity, format,
+                       sizeof...(Ts), numNibbles, array);
 
-        RuntimeLogger::registerInvocationSite(info, logId);
-    }
+    RuntimeLogger::registerInvocationSite(info, logId);
+  }
 
-    uint64_t previousPrecision = -1;
-    uint64_t timestamp = PerfUtils::Cycles::rdtsc();
-    size_t stringSizes[N + 1] = {}; //HACK: Zero length arrays are not allowed
-    size_t allocSize = getArgSizes(paramTypes, previousPrecision,
-                            stringSizes, args...) + sizeof(UncompressedEntry);
+  uint64_t previousPrecision = -1;
+  uint64_t timestamp = PerfUtils::Cycles::rdtsc();
+  size_t stringSizes[N + 1] = {};  // HACK: Zero length arrays are not allowed
+  size_t allocSize =
+      getArgSizes(paramTypes, previousPrecision, stringSizes, args...) +
+      sizeof(UncompressedEntry);
 
-    char *writePos = NanoLogInternal::RuntimeLogger::reserveAlloc(allocSize);
-    auto originalWritePos = writePos;
+  char* writePos = NanoLogInternal::RuntimeLogger::reserveAlloc(allocSize);
+  auto originalWritePos = writePos;
 
-    UncompressedEntry *ue = new(writePos) UncompressedEntry();
-    writePos += sizeof(UncompressedEntry);
+  UncompressedEntry* ue = new (writePos) UncompressedEntry();
+  writePos += sizeof(UncompressedEntry);
 
-    store_arguments(paramTypes, stringSizes, &writePos, args...);
+  store_arguments(paramTypes, stringSizes, &writePos, args...);
 
-    ue->fmtId = logId;
-    ue->timestamp = timestamp;
-    ue->entrySize = downCast<uint32_t>(allocSize);
+  ue->fmtId = logId;
+  ue->timestamp = timestamp;
+  ue->entrySize = downCast<uint32_t>(allocSize);
 
 #ifdef ENABLE_DEBUG_PRINTING
-    printf("\r\nRecording %d:'%s' of size %u\r\n",
-                        logId, info.formatString, ue->entrySize);
+  printf("\r\nRecording %d:'%s' of size %u\r\n", logId, info.formatString,
+         ue->entrySize);
 #endif
 
-    assert(allocSize == downCast<uint32_t>((writePos - originalWritePos)));
-    NanoLogInternal::RuntimeLogger::finishAlloc(allocSize);
+  assert(allocSize == downCast<uint32_t>((writePos - originalWritePos)));
+  NanoLogInternal::RuntimeLogger::finishAlloc(allocSize);
 }
 
 /**
@@ -1055,10 +953,8 @@ log(int &logId,
  * \param ...
  *      format parameters
  */
-static void
-NANOLOG_PRINTF_FORMAT_ATTR(1, 2)
-checkFormat(NANOLOG_PRINTF_FORMAT const char *, ...) {}
-
+static void NANOLOG_PRINTF_FORMAT_ATTR(1, 2)
+    checkFormat(NANOLOG_PRINTF_FORMAT const char*, ...) {}
 
 /**
  * NANO_LOG macro used for logging.
@@ -1070,31 +966,33 @@ checkFormat(NANOLOG_PRINTF_FORMAT const char *, ...) {}
  * \param ...UNASSIGNED_LOGID
  *      Log arguments associated with the printf-like string.
  */
-#define NANO_LOG(severity, format, ...) do { \
-    constexpr int numNibbles = NanoLogInternal::getNumNibblesNeeded(format); \
-    constexpr int nParams = NanoLogInternal::countFmtParams(format); \
-    \
-    /*** Very Important*** These must be 'static' so that we can save pointers
-     * to these variables and have them persist beyond the invocation.
-     * The static logId is used to forever associate this local scope (tied
-     * to an expansion of #NANO_LOG) with an id and the paramTypes array is
-     * used by the compression function, which is invoked in another thread
-     * at a much later time. */ \
-    static constexpr std::array<NanoLogInternal::ParamType, nParams> paramTypes = \
-                                NanoLogInternal::analyzeFormatString<nParams>(format); \
-    static int logId = NanoLogInternal::UNASSIGNED_LOGID; \
-    \
-    if (NanoLog::severity > NanoLog::getLogLevel()) \
-        break; \
-    \
-    /* Triggers the GNU printf checker by passing it into a no-op function.
-     * Trick: This call is surrounded by an if false so that the VA_ARGS don't
-     * evaluate for cases like '++i'.*/ \
-    if (false) { NanoLogInternal::checkFormat(format, ##__VA_ARGS__); } /*NOLINT(cppcoreguidelines-pro-type-vararg, hicpp-vararg)*/\
-    \
+#define NANO_LOG(severity, format, ...)                                        \
+  do {                                                                         \
+    constexpr int numNibbles = NanoLogInternal::getNumNibblesNeeded(format);   \
+    constexpr int nParams = NanoLogInternal::countFmtParams(format);           \
+                                                                               \
+    /*** Very Important*** These must be 'static' so that we can save pointers \
+     * to these variables and have them persist beyond the invocation.         \
+     * The static logId is used to forever associate this local scope (tied    \
+     * to an expansion of #NANO_LOG) with an id and the paramTypes array is    \
+     * used by the compression function, which is invoked in another thread    \
+     * at a much later time. */                                                \
+    static constexpr std::array<NanoLogInternal::ParamType, nParams>           \
+        paramTypes = NanoLogInternal::analyzeFormatString<nParams>(format);    \
+    static int logId = NanoLogInternal::UNASSIGNED_LOGID;                      \
+                                                                               \
+    if (NanoLog::severity > NanoLog::getLogLevel()) break;                     \
+                                                                               \
+    /* Triggers the GNU printf checker by passing it into a no-op function.    \
+     * Trick: This call is surrounded by an if false so that the VA_ARGS don't \
+     * evaluate for cases like '++i'.*/                                        \
+    if (false) {                                                               \
+      NanoLogInternal::checkFormat(format, ##__VA_ARGS__);                     \
+    } /*NOLINT(cppcoreguidelines-pro-type-vararg, hicpp-vararg)*/              \
+                                                                               \
     NanoLogInternal::log(logId, __FILE__, __LINE__, NanoLog::severity, format, \
-                            numNibbles, paramTypes, ##__VA_ARGS__); \
-} while(0)
+                         numNibbles, paramTypes, ##__VA_ARGS__);               \
+  } while (0)
 } /* Namespace NanoLogInternal */
 
-#endif //NANOLOG_CPP17_H
+#endif  // NANOLOG_CPP17_H

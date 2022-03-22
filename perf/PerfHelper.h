@@ -21,10 +21,10 @@
 #ifndef PERFHELPER_H
 #define PERFHELPER_H
 
-#include <cstdarg>
-
 #include <stdint.h>
 #include <stdio.h>
+
+#include <cstdarg>
 
 #include "Portability.h"
 
@@ -34,66 +34,26 @@ void flushCache();
 uint64_t plusOne(uint64_t x) NANOLOG_NOINLINE;
 
 // Simple function that performs no computation
-template<int addTo>
-int
-emptyFunction() {
-    return addTo;
+template <int addTo>
+int emptyFunction() {
+  return addTo;
 }
 
 // Used to approximate the cost to dereference to a function array
-static int (*functionArray[50])() {
-    emptyFunction<0>,
-    emptyFunction<1>,
-    emptyFunction<2>,
-    emptyFunction<3>,
-    emptyFunction<4>,
-    emptyFunction<5>,
-    emptyFunction<6>,
-    emptyFunction<7>,
-    emptyFunction<8>,
-    emptyFunction<9>,
-    emptyFunction<10>,
-    emptyFunction<11>,
-    emptyFunction<12>,
-    emptyFunction<13>,
-    emptyFunction<14>,
-    emptyFunction<15>,
-    emptyFunction<16>,
-    emptyFunction<17>,
-    emptyFunction<18>,
-    emptyFunction<19>,
-    emptyFunction<20>,
-    emptyFunction<21>,
-    emptyFunction<22>,
-    emptyFunction<23>,
-    emptyFunction<24>,
-    emptyFunction<25>,
-    emptyFunction<26>,
-    emptyFunction<27>,
-    emptyFunction<28>,
-    emptyFunction<29>,
-    emptyFunction<30>,
-    emptyFunction<31>,
-    emptyFunction<32>,
-    emptyFunction<33>,
-    emptyFunction<34>,
-    emptyFunction<35>,
-    emptyFunction<36>,
-    emptyFunction<37>,
-    emptyFunction<38>,
-    emptyFunction<39>,
-    emptyFunction<40>,
-    emptyFunction<41>,
-    emptyFunction<42>,
-    emptyFunction<43>,
-    emptyFunction<44>,
-    emptyFunction<45>,
-    emptyFunction<46>,
-    emptyFunction<47>,
-    emptyFunction<48>,
-    emptyFunction<49>
-};
-
+static int (*functionArray[50])(){
+    emptyFunction<0>,  emptyFunction<1>,  emptyFunction<2>,  emptyFunction<3>,
+    emptyFunction<4>,  emptyFunction<5>,  emptyFunction<6>,  emptyFunction<7>,
+    emptyFunction<8>,  emptyFunction<9>,  emptyFunction<10>, emptyFunction<11>,
+    emptyFunction<12>, emptyFunction<13>, emptyFunction<14>, emptyFunction<15>,
+    emptyFunction<16>, emptyFunction<17>, emptyFunction<18>, emptyFunction<19>,
+    emptyFunction<20>, emptyFunction<21>, emptyFunction<22>, emptyFunction<23>,
+    emptyFunction<24>, emptyFunction<25>, emptyFunction<26>, emptyFunction<27>,
+    emptyFunction<28>, emptyFunction<29>, emptyFunction<30>, emptyFunction<31>,
+    emptyFunction<32>, emptyFunction<33>, emptyFunction<34>, emptyFunction<35>,
+    emptyFunction<36>, emptyFunction<37>, emptyFunction<38>, emptyFunction<39>,
+    emptyFunction<40>, emptyFunction<41>, emptyFunction<42>, emptyFunction<43>,
+    emptyFunction<44>, emptyFunction<45>, emptyFunction<46>, emptyFunction<47>,
+    emptyFunction<48>, emptyFunction<49>};
 
 /*
  * This function just discards its argument. It's used to make it
@@ -104,10 +64,10 @@ static int (*functionArray[50])() {
  *      Pointer to arbitrary value; it's discarded.
  */
 void discard(void* value) {
-    int x = *reinterpret_cast<int*>(value);
-    if (x == 0x43924776) {
-        printf("Value was 0x%x\n", x);
-    }
+  int x = *reinterpret_cast<int*>(value);
+  if (x == 0x43924776) {
+    printf("Value was 0x%x\n", x);
+  }
 }
 
 // Below are 3 functions that use various methods to sum integers.
@@ -140,7 +100,6 @@ int va_argSum(int count, ...);
  */
 int sum4(int a, int b, int c, int d);
 
-
 /**
  * Sum a variable number of arguments via variadic templates. This would most
  * likely compile down to a single function call that may be in-lined.
@@ -153,16 +112,16 @@ int sum4(int a, int b, int c, int d);
  *      Sum of the arguments
  */
 
-template<typename T>
+template <typename T>
 T templateSum(T v) {
   return v;
 }
 
-template<typename T, typename... Args>
+template <typename T, typename... Args>
 T templateSum(T first, Args... args) {
   return first + templateSum(args...);
 }
 
-} // PerfHelper
+}  // namespace PerfHelper
 
 #endif  // PERFHELPER_H
