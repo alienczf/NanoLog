@@ -11,7 +11,3 @@ add_subdirectory(logDecompressor)
 add_subdirectory(perf)
 add_subdirectory(integrationTest)
 add_subdirectory(benchmarks)
-
-set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/_run" CACHE PATH "default install path" FORCE)
-list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN/../lib64")
-message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
