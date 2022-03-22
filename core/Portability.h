@@ -1,5 +1,4 @@
-#ifndef NANOLOG_PORTABILITY_H
-#define NANOLOG_PORTABILITY_H
+#pragma once
 
 #ifdef _MSC_VER
 #define NANOLOG_ALWAYS_INLINE __forceinline
@@ -48,5 +47,3 @@
 #define NANOLOG_PRINTF_FORMAT
 #define NANOLOG_PRINTF_FORMAT_ATTR(string_index, first_to_check)
 #endif
-
-#endif /* NANOLOG_PORTABILITY_H */

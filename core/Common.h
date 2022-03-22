@@ -12,11 +12,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#pragma once
 #include <cassert>
-
-#ifndef COMMON_H
-#define COMMON_H
 
 // Uncomment to enable super verbose logging by NanoLog
 //#define ENABLE_DEBUG_PRINTING
@@ -59,5 +56,3 @@ inline Small downCast(const Large& large) {
   return small;
 }
 };  // namespace NanoLogInternal
-
-#endif

@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef NANOLOG_H
-#define NANOLOG_H
+#pragma once
 
 #include <string>
 
@@ -133,5 +132,3 @@ int getCoreIdOfBackgroundThread();
 #include <cstring> /* strlen + memcpy */
 
 #include "RuntimeLogger.h"
-
-#endif  // NANOLOG_H

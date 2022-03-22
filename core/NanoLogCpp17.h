@@ -12,8 +12,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef NANOLOG_CPP17_H
-#define NANOLOG_CPP17_H
+#pragma once
 
 #include <algorithm>
 #include <cstdint>
@@ -994,5 +993,3 @@ static void NANOLOG_PRINTF_FORMAT_ATTR(1, 2)
                          numNibbles, paramTypes, ##__VA_ARGS__);               \
   } while (0)
 } /* Namespace NanoLogInternal */
-
-#endif  // NANOLOG_CPP17_H

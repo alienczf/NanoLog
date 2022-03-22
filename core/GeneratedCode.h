@@ -14,8 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef GENERATED_CODE
-#define GENERATED_CODE
+#pragma once
 
 #include <stdint.h>
 
@@ -110,5 +109,3 @@ extern void (*decompressAndPrintFnArray[])(const char** in, FILE* outputFd,
 long int writeDictionary(char* buffer, char* endOfBuffer);
 
 }  // namespace GeneratedFunctions
-
-#endif /* BUFFER_STUFFER */

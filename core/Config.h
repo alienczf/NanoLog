@@ -12,8 +12,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <fcntl.h>
 
@@ -67,5 +66,3 @@ static const uint32_t POLL_INTERVAL_NO_WORK_US = 1;
 // be a lower bound and the actual time spent sleeping may be higher.
 static const uint32_t POLL_INTERVAL_DURING_IO_US = 1;
 }  // namespace NanoLogConfig
-
-#endif /* CONFIG_H */

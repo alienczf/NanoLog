@@ -12,7 +12,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#pragma once
 #include <stdio.h>
 
 #include <cassert>
@@ -26,8 +26,6 @@
 #include "Portability.h"
 #include "Util.h"
 
-#ifndef LOG_H
-#define LOG_H
 /**
  * The Log namespace contains a collection of data structures and functions
  * to manage the metadata in the various buffers of the NanoLog system.
@@ -943,7 +941,5 @@ class Decoder {
 
   DISALLOW_COPY_AND_ASSIGN(Decoder);
 };
-}; /* namespace Log */
-}; /* namespace NanoLogInternal */
-
-#endif /* LOG_H */
+};  // namespace Log
+};  // namespace NanoLogInternal

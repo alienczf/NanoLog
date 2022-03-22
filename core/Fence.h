@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef FENCE_H
-#define FENCE_H
+#pragma once
 
 namespace NanoLogInternal {
 /**
@@ -75,5 +74,3 @@ class Fence {
   }
 };
 };  // namespace NanoLogInternal
-
-#endif  // FENCE_H

@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef PERFUTIL_UTIL_H
-#define PERFUTIL_UTIL_H
+#pragma once
 
 #include <sched.h>
 #include <stdint.h>
@@ -175,4 +174,3 @@ constexpr size_t arraySize(T (&)[N]) {
 }  // namespace NanoLogInternal
 
 #undef FORCE_INLINE
-#endif  // NanoLogInternal

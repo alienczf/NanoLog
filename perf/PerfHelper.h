@@ -18,8 +18,7 @@
  * benchmarked by Perf.cc
  */
 
-#ifndef PERFHELPER_H
-#define PERFHELPER_H
+#pragma once
 
 #include <stdint.h>
 #include <stdio.h>
@@ -123,5 +122,3 @@ T templateSum(T first, Args... args) {
 }
 
 }  // namespace PerfHelper
-
-#endif  // PERFHELPER_H

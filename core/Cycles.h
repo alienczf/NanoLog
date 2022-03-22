@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef PERFGRAPH_CYCLES_H
-#define PERFGRAPH_CYCLES_H
+#pragma once
 
 #include <stdint.h>
 
@@ -86,5 +85,3 @@ class Cycles {
 };
 
 }  // namespace PerfUtils
-
-#endif  // RAMCLOUD_CYCLES_H

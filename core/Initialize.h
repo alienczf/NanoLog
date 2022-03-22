@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef RAMCLOUD_INITIALIZE_H
-#define RAMCLOUD_INITIALIZE_H
+#pragma once
 
 namespace PerfUtils {
 
@@ -80,5 +79,3 @@ class Initialize {
 };
 
 }  // namespace PerfUtils
-
-#endif  // RAMCLOUD_INITIALIZE_H

@@ -27,11 +27,7 @@
 #include <iostream>
 #include <string>
 
-#ifndef PREPROCESSOR_NANOLOG
 #include "NanoLogCpp17.h"
-#else
-#include "NanoLog.h"
-#endif
 using namespace NanoLog::LogLevels;
 
 #ifndef __Sample__h__

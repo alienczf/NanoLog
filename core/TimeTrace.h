@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef PERFUTIL_TIMETRACE_H
-#define PERFUTIL_TIMETRACE_H
+#pragma once
 
 #include <xmmintrin.h>
 
@@ -182,5 +181,3 @@ class TimeTrace {
 };
 
 }  // namespace PerfUtils
-
-#endif  // PERFUTIL_TIMETRACE_H

@@ -13,8 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef RUNTIME_NANOLOG_H
-#define RUNTIME_NANOLOG_H
+#pragma once
 
 #include <aio.h>
 
@@ -480,5 +479,3 @@ class RuntimeLogger {
 // last #endif. It serves a marker for the preprocessor for where it can
 // start injecting inlined, generated functions.
 static const int __internal_dummy_variable_marker_for_code_injection = 0;
-
-#endif /* RUNTIME_NANOLOG_H */
