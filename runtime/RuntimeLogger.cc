@@ -35,6 +35,8 @@ namespace NanoLogInternal {
 __thread RuntimeLogger::StagingBuffer* RuntimeLogger::stagingBuffer = nullptr;
 thread_local RuntimeLogger::StagingBufferDestroyer RuntimeLogger::sbc;
 RuntimeLogger RuntimeLogger::nanoLogSingleton;
+size_t LoggerThreadId =
+    std::getenv("LOGGER_THREAD_ID") ? atoi(std::getenv("LOGGER_THREAD_ID")) : 0;
 
 // RuntimeLogger constructor
 RuntimeLogger::RuntimeLogger()
@@ -103,10 +105,7 @@ RuntimeLogger::RuntimeLogger()
         "to support its operations. Quitting...\r\n");
     std::exit(-1);
   }
-
-#ifndef BENCHMARK_DISCARD_ENTRIES_AT_STAGINGBUFFER
   compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
-#endif
 }
 
 // RuntimeLogger destructor
@@ -625,9 +624,13 @@ void RuntimeLogger::setLogFile_internal(const char* filename) {
   // Relaunch thread
   nextInvocationIndexToBePersisted = 0;  // Reset the dictionary
   compressionThreadShouldExit = false;
-#ifndef BENCHMARK_DISCARD_ENTRIES_AT_STAGINGBUFFER
   compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
-#endif
+
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(LoggerThreadId, &cpuset);
+  int rc = pthread_setaffinity_np(compressionThread.native_handle(),
+                                  sizeof(cpu_set_t), &cpuset);
 }
 
 /**
@@ -736,12 +739,6 @@ char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
       minFreeSpace = cachedConsumerPos - producerPos;
     }
 
-#ifdef BENCHMARK_DISCARD_ENTRIES_AT_STAGINGBUFFER
-    // If we are discarding entries anwyay, just reset space to the head
-    producerPos = storage;
-    minFreeSpace = endOfBuffer - storage;
-#endif
-
     // Needed to prevent infinite loops in tests
     if (!blocking && minFreeSpace <= nbytes) return nullptr;
   }
@@ -788,105 +785,5 @@ char* RuntimeLogger::StagingBuffer::peek(uint64_t* bytesAvailable) {
   *bytesAvailable = cachedProducerPos - consumerPos;
   return consumerPos;
 }
-if (cachedProducerPos < consumerPos) {
-  Fence::lfence();  // Prevent reading new producerPos but old endOf...
-  *bytesAvailable = endOfRecordedSpace - consumerPos;
 
-  if (*bytesAvailable > 0) return consumerPos;
-
-  // Roll over
-  consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
 }  // namespace NanoLogInternal
-}
-;  // namespace NanoLog Internal/ Prevent reading new producerPos but old
-   // endOf...
-*bytesAvailable = endOfRecordedSpace - consumerPos;
-
-if (*bytesAvailable > 0) return consumerPos;
-
-// Roll over
-consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
-}
-if (cachedProducerPos < consumerPos)
-
-{
-  Fence::lfence();  // Prevent reading new producerPos but old endOf...
-  *bytesAvailable = endOfRecordedSpace - consumerPos;
-
-  if (*bytesAvailable > 0) return consumerPos;
-
-  // Roll over
-  consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
-}
-}
-;  // namespace NanoLog Internal/ Prevent reading new producerPos but old
-   // endOf...
-*bytesAvailable = endOfRecordedSpace - consumerPos;
-
-if (*bytesAvailable > 0) return consumerPos;
-
-// Roll over
-consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
-}
-if (cachedProducerPos < consumerPos)
-
-{
-  Fence::lfence();  // Prevent reading new producerPos but old endOf...
-  *bytesAvailable = endOfRecordedSpace - consumerPos;
-
-  if (*bytesAvailable > 0) return consumerPos;
-
-  // Roll over
-  consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
-}
-}
-;  // namespace NanoLog Internal/ Prevent reading new producerPos but old
-   // endOf...
-*bytesAvailable = endOfRecordedSpace - consumerPos;
-
-if (*bytesAvailable > 0) return consumerPos;
-
-// Roll over
-consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
-}
-if (cachedProducerPos < consumerPos)
-
-{
-  Fence::lfence();  // Prevent reading new producerPos but old endOf...
-  *bytesAvailable = endOfRecordedSpace - consumerPos;
-
-  if (*bytesAvailable > 0) return consumerPos;
-
-  // Roll over
-  consumerPos = storage;
-}
-
-*bytesAvailable = cachedProducerPos - consumerPos;
-return consumerPos;
-}
-}
-;  // namespace NanoLog Internal
