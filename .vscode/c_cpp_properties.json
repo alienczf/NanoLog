@@ -1,0 +1,21 @@
+{
+    "env": {
+        "myDefaultIncludePath": [
+            "${workspaceFolder}"
+        ]
+    },
+    "configurations": [
+        {
+            "name": "cpp",
+            "includePath": [
+                "${default}"
+            ],
+            "intelliSenseMode": "${default}",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "compileCommands": "${workspaceFolder}/_build/r/compile_commands.json",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
