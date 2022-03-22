@@ -39,6 +39,10 @@ add_compile_options(
   -Wno-ambiguous-reversed-operator
   -Wno-unused-parameter
   -Wno-unused-result
+  # ...but not unused variables warning, as they can get annoying in release builds because asserts
+  # get compiled out
+  "$<$<CONFIG:RELEASE>:-Wno-unused-variable>"
+  "$<$<CONFIG:RELEASE>:-Wno-unused-const-variable>"
 
   # fancy flags
   -fno-ms-extensions

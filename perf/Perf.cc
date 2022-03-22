@@ -114,11 +114,11 @@ static NANOLOG_ALWAYS_INLINE uint64_t rdtscp() {
 //----------------------------------------------------------------------
 
 double aggregate_customFunction() {
-  int count = 1000000;
+  size_t count = 1000000;
   int total = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int j = 0; j < count; ++j) {
+  for (size_t j = 0; j < count; ++j) {
     total += PerfHelper::sum4(j, j, j, j);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -128,11 +128,11 @@ double aggregate_customFunction() {
 }
 
 double aggregate_templates() {
-  int count = 1000000;
+  size_t count = 1000000;
   int total = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int j = 0; j < count; ++j) {
+  for (size_t j = 0; j < count; ++j) {
     total += PerfHelper::templateSum(4, j, j, j, j);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -142,11 +142,11 @@ double aggregate_templates() {
 }
 
 double aggregate_va_args() {
-  int count = 1000000;
+  size_t count = 1000000;
   int total = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int j = 0; j < count; ++j) {
+  for (size_t j = 0; j < count; ++j) {
     total += PerfHelper::va_argSum(4, j, j, j, j);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -163,8 +163,8 @@ double aggregate_va_args() {
  *
  * \return total time taken to read the readSize in seconds
  */
-double ifstreamReadHelper(int readSize) {
-  int dataLen = 1000000;
+double ifstreamReadHelper(size_t readSize) {
+  size_t dataLen = 1000000;
   char* backing_buffer = static_cast<char*>(malloc(dataLen));
 
   std::ofstream oFile;
@@ -177,7 +177,7 @@ double ifstreamReadHelper(int readSize) {
   iFile.open("/tmp/testLog.dat");
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < dataLen / readSize; ++i) {
+  for (size_t i = 0; i < dataLen / readSize; ++i) {
     iFile.read(backing_buffer, readSize);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -203,8 +203,8 @@ double ifstreamRead100() { return ifstreamReadHelper(100); }
  *
  * \return total time taken to read the readSize in seconds
  */
-double freadHelper(int readSize) {
-  int dataLen = 1000000;
+double freadHelper(size_t readSize) {
+  size_t dataLen = 1000000;
   char* backing_buffer = static_cast<char*>(malloc(dataLen));
 
   std::ofstream oFile;
@@ -220,7 +220,7 @@ double freadHelper(int readSize) {
   }
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < dataLen / readSize; ++i) {
+  for (size_t i = 0; i < dataLen / readSize; ++i) {
     fread(backing_buffer, 1, readSize, fd);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -241,7 +241,7 @@ double fread10() { return freadHelper(10); }
 double fread100() { return freadHelper(100); }
 
 double fgetcFn() {
-  int dataLen = 1000000;
+  size_t dataLen = 1000000;
   char* backing_buffer = static_cast<char*>(malloc(dataLen));
 
   std::ofstream oFile;
@@ -258,7 +258,7 @@ double fgetcFn() {
 
   uint8_t cnt = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < dataLen; ++i) {
+  for (size_t i = 0; i < dataLen; ++i) {
     cnt += fgetc(fd);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -273,12 +273,12 @@ double fgetcFn() {
 }
 
 double sched_getcpu_rdtscp_test() {
-  int count = 1000000;
+  size_t count = 1000000;
   int cpuSum = 0;
   uint64_t timeSum = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     timeSum += Cycles::rdtsc();
     cpuSum += sched_getcpu();
   }
@@ -289,17 +289,17 @@ double sched_getcpu_rdtscp_test() {
 }
 
 double compressBinarySearch() {
-  const int count = 1000000;
+  const size_t count = 1000000;
   uint64_t* buffer = static_cast<uint64_t*>(malloc(count * sizeof(uint64_t)));
 
   srand(0);
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     buffer[i] = 1UL << (rand() % 64);
   }
 
   int sumOfBytes = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     int numBytes;
     uint64_t val = buffer[i];
     if (val < (1ULL << 32)) {
@@ -337,17 +337,17 @@ double compressBinarySearch() {
 }
 
 double compressLinearSearch() {
-  const int count = 1000000;
+  const size_t count = 1000000;
   uint64_t* buffer = static_cast<uint64_t*>(malloc(count * sizeof(uint64_t)));
 
   srand(0);
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     buffer[i] = 1UL << (rand() % 64);
   }
 
   int sumOfBytes = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     int numBytes;
     uint64_t val = buffer[i];
 
@@ -380,10 +380,10 @@ double compressLinearSearch() {
 }
 
 double delayInBenchmark() {
-  int count = 1000000;
+  size_t count = 1000000;
   uint64_t x = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     function(0);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -397,7 +397,7 @@ double delayInBenchmark() {
 // fairly expensive scenario. Someone with fancy ALU knowledge could
 // probably pick worse values.
 double div32() {
-  int count = 1000000;
+  size_t count = 1000000;
   uint64_t start = Cycles::rdtsc();
   // NB: Expect an x86 processor exception is there's overflow.
   uint32_t numeratorHi = 0xa5a5a5a5U;
@@ -405,7 +405,7 @@ double div32() {
   uint32_t divisor = 0xaa55aa55U;
   uint32_t quotient;
   uint32_t remainder;
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     __asm__ __volatile__("div %4"
                          : "=a"(quotient), "=d"(remainder)
                          : "a"(numeratorLo), "d"(numeratorHi), "r"(divisor)
@@ -420,7 +420,7 @@ double div32() {
 // fairly expensive scenario. Someone with fancy ALU knowledge could
 // probably pick worse values.
 double div64() {
-  int count = 1000000;
+  size_t count = 1000000;
   // NB: Expect an x86 processor exception is there's overflow.
   uint64_t start = Cycles::rdtsc();
   uint64_t numeratorHi = 0x5a5a5a5a5a5UL;
@@ -428,7 +428,7 @@ double div64() {
   uint64_t divisor = 0xaa55aa55aa55aa55UL;
   uint64_t quotient;
   uint64_t remainder;
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     __asm__ __volatile__("divq %4"
                          : "=a"(quotient), "=d"(remainder)
                          : "a"(numeratorLo), "d"(numeratorHi), "r"(divisor)
@@ -440,10 +440,10 @@ double div64() {
 
 // Measure the cost of calling a non-inlined function.
 double functionCall() {
-  int count = 1000000;
+  size_t count = 1000000;
   uint64_t x = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     PerfHelper::plusOne(x);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -453,15 +453,16 @@ double functionCall() {
 }
 
 double functionDereference() {
-  const int count = 1000000;
-  char indecies[count];
+  const size_t count = 1000000;
+  size_t indecies[count];
 
   srand(0);
-  for (int i = 0; i < count; ++i) indecies[i] = static_cast<char>(rand() % 50);
+  for (size_t i = 0; i < count; ++i)
+    indecies[i] = static_cast<size_t>(rand() % 50);
 
   uint64_t discardMe = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     discardMe += PerfHelper::functionArray[indecies[i]]();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -471,15 +472,16 @@ double functionDereference() {
 }
 
 double switchCost() {
-  const int count = 1000000;
-  char indecies[count];
+  const size_t count = 1000000;
+  size_t indecies[count];
 
   srand(0);
-  for (int i = 0; i < count; ++i) indecies[i] = static_cast<char>(rand() % 50);
+  for (size_t i = 0; i < count; ++i)
+    indecies[i] = static_cast<size_t>(rand() % 50);
 
   uint64_t discardMe = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     switch (indecies[i]) {
       case 0:
         discardMe += 0;
@@ -640,12 +642,12 @@ double switchCost() {
 }
 
 double arrayPush() {
-  const int count = 1000000;
+  const size_t count = 1000000;
   char* baseBuffer = static_cast<char*>(malloc(count * 4 * sizeof(uint64_t)));
   char* buffer = baseBuffer;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     *reinterpret_cast<uint64_t*>(buffer) = 1;
     buffer += sizeof(uint64_t);
 
@@ -665,12 +667,12 @@ double arrayPush() {
 }
 
 double arrayStructCast() {
-  const int count = 1000000;
+  const size_t count = 1000000;
   char* baseBuffer = static_cast<char*>(malloc(count * 4 * sizeof(uint64_t)));
   char* buffer = baseBuffer;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     struct Quadnums {
       uint64_t num1;
       uint64_t num2;
@@ -698,20 +700,20 @@ double mapCreate() {
 
   // Generate an array of random keys that will be used to lookup
   // entries in the map.
-  int numKeys = 20;
+  size_t numKeys = 20;
   uint64_t keys[numKeys];
-  for (int i = 0; i < numKeys; i++) {
+  for (size_t i = 0; i < numKeys; i++) {
     keys[i] = rand();
   }
 
-  int count = 10000;
+  size_t count = 10000;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i += 5) {
+  for (size_t i = 0; i < count; i += 5) {
     std::map<uint64_t, uint64_t> map;
-    for (int j = 0; j < numKeys; j++) {
+    for (size_t j = 0; j < numKeys; j++) {
       map[keys[j]] = 1000 + j;
     }
-    for (int j = 0; j < numKeys; j++) {
+    for (size_t j = 0; j < numKeys; j++) {
       map.erase(keys[j]);
     }
   }
@@ -726,18 +728,18 @@ double mapLookup() {
 
   // Generate an array of random keys that will be used to lookup
   // entries in the map.
-  int numKeys = 20;
+  size_t numKeys = 20;
   uint64_t keys[numKeys];
-  for (int i = 0; i < numKeys; i++) {
+  for (size_t i = 0; i < numKeys; i++) {
     keys[i] = rand();
     map[keys[i]] = 12345;
   }
 
-  int count = 100000;
+  size_t count = 100000;
   uint64_t sum = 0;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
-    for (int j = 0; j < numKeys; j++) {
+  for (size_t i = 0; i < count; i++) {
+    for (size_t j = 0; j < numKeys; j++) {
       sum += map[keys[j]];
     }
   }
@@ -757,21 +759,21 @@ double mapLookup() {
  * \return
  *        average time per cpyByte copy
  */
-double manualCopy(int cpySize, bool coldSrc, bool coldDst) {
-  int count = 1000000;
+double manualCopy(size_t cpySize, bool coldSrc, bool coldDst) {
+  size_t count = 1000000;
   uint32_t src[count], dst[count];
   int bufSize = 1000000000;  // 1GB buffer
   char* buf = static_cast<char*>(malloc(bufSize));
 
   uint32_t bound = (bufSize - cpySize);
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     src[i] = (coldSrc) ? (rand() % bound) : 0;
     dst[i] = (coldDst) ? (rand() % bound) : 0;
   }
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
-    for (int j = 0; j < cpySize; ++j) {
+  for (size_t i = 0; i < count; i++) {
+    for (size_t j = 0; j < cpySize; ++j) {
       *(buf + dst[i]) = *(buf + src[i]);
     }
   }
@@ -787,19 +789,19 @@ double manualCopyCached10() { return manualCopy(10, false, false); }
 
 // Measure the cost of copying a given number of bytes with memcpy.
 double memcpyShared(int cpySize, bool coldSrc, bool coldDst) {
-  int count = 1000000;
+  size_t count = 1000000;
   uint32_t src[count], dst[count];
   int bufSize = 1000000000;  // 1GB buffer
   char* buf = static_cast<char*>(malloc(bufSize));
 
   uint32_t bound = (bufSize - cpySize);
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     src[i] = (coldSrc) ? (rand() % bound) : 0;
     dst[i] = (coldDst) ? (rand() % bound) : 0;
   }
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     std::memcpy((buf + dst[i]), (buf + src[i]), cpySize);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -823,14 +825,14 @@ double memcpyCold100() { return memcpyShared(100, true, true); }
 double memcpyCold1000() { return memcpyShared(1000, true, true); }
 
 double mm_stream_pi_test() {
-  int count = 10000000;
+  size_t count = 10000000;
   char backing_buffer[128];
 
   char* buffer = (backing_buffer + 64);
   __m64* ptr = reinterpret_cast<__m64*>(buffer);
 
   uint64_t start = Cycles::rdtsc();
-  for (uint64_t i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     _mm_stream_pi(ptr, (__m64)i);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -855,7 +857,7 @@ void readerThread(uint64_t* variableToRead, volatile bool* run,
 }
 
 double mm_stream_pi_contended() {
-  int count = 1000;
+  size_t count = 1000;
   char* backing_buffer = static_cast<char*>(malloc(128));
   char* buffer = (backing_buffer + 64);
   __m64* ptr = reinterpret_cast<__m64*>(buffer);
@@ -869,7 +871,7 @@ double mm_stream_pi_contended() {
   pthread_barrier_wait(&barrier);
 
   uint64_t start = Cycles::rdtsc();
-  for (uint64_t i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     // variable += i;
     // *writeLocation += i;
     _mm_stream_pi((__m64*)&variable, (__m64)i);
@@ -887,11 +889,11 @@ double mm_stream_pi_contended() {
 
 // Cost of notifying a condition variable
 double notify_all() {
-  int count = 1000000;
+  size_t count = 1000000;
   std::condition_variable cond;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     cond.notify_all();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -900,11 +902,11 @@ double notify_all() {
 }
 
 double notify_one() {
-  int count = 1000000;
+  size_t count = 1000000;
   std::condition_variable cond;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     cond.notify_one();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -914,12 +916,12 @@ double notify_one() {
 
 // Measure the cost of the Cylcles::toNanoseconds method.
 double perfCyclesToNanoseconds() {
-  int count = 1000000;
+  size_t count = 1000000;
   uint64_t total = 0;
   uint64_t cycles = 994261;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     total += Cycles::toNanoseconds(cycles);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -929,12 +931,12 @@ double perfCyclesToNanoseconds() {
 
 // Measure the cost of the Cycles::toSeconds method.
 double perfCyclesToSeconds() {
-  int count = 1000000;
+  size_t count = 1000000;
   double total = 0;
   uint64_t cycles = 994261;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     total += Cycles::toSeconds(cycles);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -944,12 +946,12 @@ double perfCyclesToSeconds() {
 
 // Measure the cost of the reading the CPU timestamp counter
 double rdtsc_test() {
-  int count = 1000000;
+  size_t count = 1000000;
   double total = 0;
   uint64_t cycles = 994261;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     total += rdtsc();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -960,12 +962,12 @@ double rdtsc_test() {
 // Measure the cost of the reading the CPU timestamp counter
 // with serialization
 double rdtscp_test() {
-  int count = 1000000;
+  size_t count = 1000000;
   double total = 0;
   uint64_t cycles = 994261;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     total += rdtscp();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -974,11 +976,11 @@ double rdtscp_test() {
 }
 
 double sched_getcpu_test() {
-  int count = 1000000;
+  size_t count = 1000000;
   int cpuSum = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     cpuSum += sched_getcpu();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -988,12 +990,12 @@ double sched_getcpu_test() {
 }
 
 double snprintfFileLocation() {
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
   uint64_t start = Cycles::rdtsc();
   Util::serialize();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     snprintf(buffer, 1000, "%s:%d:%s", __FILE__, __LINE__, __func__);
   }
   Util::serialize();
@@ -1004,13 +1006,13 @@ double snprintfFileLocation() {
 
 double snprintfTime() {
   struct timespec now;
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
   clock_gettime(CLOCK_REALTIME, &now);
   uint64_t start = Cycles::rdtsc();
   Util::serialize();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     snprintf(buffer, 1000, "%010lu.%09lu", now.tv_sec, now.tv_nsec);
   }
   Util::serialize();
@@ -1020,12 +1022,12 @@ double snprintfTime() {
 }
 
 double snprintStatic100Char() {
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
   uint64_t start = Cycles::rdtsc();
   Util::serialize();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     snprintf(buffer, 1000,
              "aEw6ppfz3QMmDXBm91v10TxzCWdTaWUUX9ta0Fihl86Ta9nlFN"
              "JtAIDDjg9ApCgEwHvLfYZ2mTCHyMouslDI9Mvq2mvFSaNof8aJ");
@@ -1038,13 +1040,13 @@ double snprintStatic100Char() {
 
 double snprintfRAMCloud() {
   struct timespec now;
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
   clock_gettime(CLOCK_REALTIME, &now);
   uint64_t start = Cycles::rdtsc();
   Util::serialize();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     snprintf(buffer, 1000, "%010lu.%09lu %s:%d in %s %s[%d]: %s %0.6lf",
              now.tv_sec, now.tv_nsec, __FILE__, __LINE__, __func__, "Debug",
              100, "Using tombstone ratio balancer with ratio =", 0.4);
@@ -1058,10 +1060,10 @@ double snprintfRAMCloud() {
 // Measure the cost of reading the fine-grain cycle counter.
 double rdtscTest() {
   uint64_t total = 0;
-  int count = 1000000;
+  size_t count = 1000000;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     total += Cycles::rdtsc();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1071,10 +1073,10 @@ double rdtscTest() {
 
 // Measure the cost of reading high precision time
 double high_resolution_clockTest() {
-  int count = 1000000;
+  size_t count = 1000000;
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     std::chrono::high_resolution_clock::now();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1084,13 +1086,13 @@ double high_resolution_clockTest() {
 
 // Measure the cost of printing via ctime
 double printTime_ctime() {
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
   uint64_t start = Cycles::rdtsc();
   std::time_t result = std::time(nullptr);
 
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     snprintf(buffer, 1000, "%s", std::ctime(&result));
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1100,15 +1102,14 @@ double printTime_ctime() {
 }
 
 double printTime_strftime() {
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
-  std::time_t result = std::time(nullptr);
-std:
+  time_t result = std::time(nullptr);
   tm* tm = localtime(&result);
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     strftime(buffer, 1000, "%y/%m/%d %H:%M:%S", tm);
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1118,14 +1119,13 @@ std:
 }
 
 double printTime_strftime_wConversion() {
-  int count = 1000000;
+  size_t count = 1000000;
   char buffer[1000];
 
   std::time_t result = std::time(nullptr);
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
-  std:
+  for (size_t i = 0; i < count; i++) {
     tm* tm = localtime(&result);
     strftime(buffer, 1000, "%y/%m/%d %H:%M:%S", tm);
   }
@@ -1137,9 +1137,9 @@ double printTime_strftime_wConversion() {
 
 // Measure the cost of cpuid
 double serialize() {
-  int count = 1000000;
+  size_t count = 1000000;
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; i++) {
+  for (size_t i = 0; i < count; i++) {
     Util::serialize();
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1147,13 +1147,13 @@ double serialize() {
 }
 
 double cond_wait_for_millisecond() {
-  int count = 100;
+  size_t count = 100;
   std::mutex mutex;
   std::condition_variable cond;
   std::unique_lock<std::mutex> lock(mutex);
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     cond.wait_for(lock, std::chrono::milliseconds(1));
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1162,13 +1162,13 @@ double cond_wait_for_millisecond() {
 }
 
 double cond_wait_for_microsecond() {
-  int count = 10000;
+  size_t count = 10000;
   std::mutex mutex;
   std::condition_variable cond;
   std::unique_lock<std::mutex> lock(mutex);
 
   uint64_t start = Cycles::rdtsc();
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     cond.wait_for(lock, std::chrono::microseconds(1));
   }
   uint64_t stop = Cycles::rdtsc();
@@ -1177,14 +1177,14 @@ double cond_wait_for_microsecond() {
 }
 
 double uncompressedLogEntryIteration() {
-  int arraySize = 1000000;
+  size_t arraySize = 1000000;
 
   typedef Log::UncompressedEntry Entry;
   Entry* in = static_cast<Entry*>(malloc(sizeof(Entry) * arraySize));
   uint64_t junk = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int j = 0; j < arraySize; ++j) {
+  for (size_t j = 0; j < arraySize; ++j) {
     junk += in[j].entrySize;
     junk += in[j].fmtId;
     junk += in[j].timestamp;
@@ -1198,14 +1198,14 @@ double uncompressedLogEntryIteration() {
 }
 
 double uncompressedLogEntryIterationWithFence() {
-  int arraySize = 1000000;
+  size_t arraySize = 1000000;
 
   typedef Log::UncompressedEntry Entry;
   Entry* in = static_cast<Entry*>(malloc(sizeof(Entry) * arraySize));
   uint64_t junk = 0;
 
   uint64_t start = Cycles::rdtsc();
-  for (int j = 0; j < arraySize; ++j) {
+  for (size_t j = 0; j < arraySize; ++j) {
     junk += in[j].entrySize;
     junk += in[j].fmtId;
     junk += in[j].timestamp;
@@ -1352,14 +1352,14 @@ int main(int argc, char* argv[]) {
   bindThreadToCpu(3);
   if (argc == 1) {
     // No test names specified; run all tests.
-    for (int i = 0; i < sizeof(tests) / sizeof(TestInfo); ++i) {
+    for (size_t i = 0; i < sizeof(tests) / sizeof(TestInfo); ++i) {
       runTest(tests[i]);
     }
   } else {
     // Run only the tests that were specified on the command line.
     for (int j = 1; j < argc; j++) {
       bool foundTest = false;
-      for (int i = 0; i < sizeof(tests) / sizeof(TestInfo); ++i) {
+      for (size_t i = 0; i < sizeof(tests) / sizeof(TestInfo); ++i) {
         if (strcmp(argv[j], tests[i].name) == 0) {
           foundTest = true;
           runTest(tests[i]);
