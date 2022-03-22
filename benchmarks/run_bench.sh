@@ -38,8 +38,8 @@ printf "\r\n\r\n**Note** Since the benchmarking branch can change due to master 
 printf "================\r\n" >> $SETUP_FILE
 printf "== Enviroment ==\r\n" >> $SETUP_FILE
 printf "================\r\n" >> $SETUP_FILE
-printf "g++ version:\r\n"     >> $SETUP_FILE
-g++ --version                 >> $SETUP_FILE
+printf "clang++ version:\r\n" >> $SETUP_FILE
+clang++ --version             >> $SETUP_FILE
 printf "\r\nKernel:\r\n"      >> $SETUP_FILE
 uname -a                      >> $SETUP_FILE
 printf "\r\nDisks:\r\n"       >> $SETUP_FILE
