@@ -1,4 +1,4 @@
-set(TARGET NanoLog)
+set(TARGET NanoLogCore)
 find_package(Threads REQUIRED)
 find_package(RT REQUIRED)
 file(GLOB_RECURSE SRC "*.h" "*.cc")

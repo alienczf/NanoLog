@@ -6,7 +6,7 @@ project(NanoLog VERSION 0.0.1 DESCRIPTION "Nanolog is an extremely performant na
 include(Flags)
 include(Utils)
 
-add_subdirectory(runtime)
+add_subdirectory(core)
 add_subdirectory(logDecompressor)
 add_subdirectory(perf)
 add_subdirectory(integrationTest)
