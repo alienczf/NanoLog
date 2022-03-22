@@ -33,7 +33,6 @@
 #include "NanoLogCpp17.h"
 #include "TimeTrace.h"
 
-static uint64_t cntr = 0;
 static const uint32_t BENCHMARK_THREADS = 5;
 static const uint64_t ITERATIONS = 100000000;
 
@@ -61,7 +60,7 @@ void runBenchmark(int id, pthread_barrier_t* barrier, T& bench_ops) {
   PerfUtils::TimeTrace::record("Thread[%d]: Starting benchmark", id);
   start = PerfUtils::Cycles::rdtsc();
 
-  for (int i = 0; i < ITERATIONS; ++i) {
+  for (size_t i = 0; i < ITERATIONS; ++i) {
     bench_ops();
   }
   stop = PerfUtils::Cycles::rdtsc();
@@ -76,14 +75,7 @@ void runBenchmark(int id, pthread_barrier_t* barrier, T& bench_ops) {
   // Break abstraction to bring metrics on cycles blocked.
   uint32_t nBlocks =
       NanoLogInternal::RuntimeLogger::stagingBuffer->numTimesProducerBlocked;
-  double timeBlocked =
-      1e9 *
-      PerfUtils::Cycles::toSeconds(
-          NanoLogInternal::RuntimeLogger::stagingBuffer->cyclesProducerBlocked);
-  printf(
-      "Thread[%d]: Time producer was stuck for = %0.2e ns (avg: %0.2e ns cnt: "
-      "%u)\r\n",
-      id, timeBlocked, timeBlocked / nBlocks, nBlocks);
+  printf("Thread[%d]: Times producer was stuck:%u\r\n", id, nBlocks);
 }
 
 int main(int argc, char** argv) {
@@ -142,14 +134,14 @@ int main(int argc, char** argv) {
 
     std::vector<std::thread> threads;
     threads.reserve(BENCHMARK_THREADS);
-    for (int i = 1; i < BENCHMARK_THREADS; ++i)
+    for (size_t i = 1; i < BENCHMARK_THREADS; ++i)
       threads.emplace_back(
           [&, i = i]() { runBenchmark(i, &barrier, op.second); });
 
     uint64_t start = PerfUtils::Cycles::rdtsc();
     runBenchmark(0, &barrier, op.second);
 
-    for (int i = 0; i < threads.size(); ++i)
+    for (size_t i = 0; i < threads.size(); ++i)
       if (threads[i].joinable()) threads.at(i).join();
 
     uint64_t syncStart = PerfUtils::Cycles::rdtsc();
@@ -170,9 +162,7 @@ int main(int argc, char** argv) {
         NanoLogInternal::RuntimeLogger::stagingBuffer->numAllocations -
         preAlloctions;
     double totalTime = PerfUtils::Cycles::toSeconds(stop - start);
-    double recordTimeEstimated = PerfUtils::Cycles::toSeconds(
-        stop - start -
-        NanoLogInternal::RuntimeLogger::stagingBuffer->cyclesProducerBlocked);
+    double recordTimeEstimated = PerfUtils::Cycles::toSeconds(stop - start);
     double recordNsEstimated =
         recordTimeEstimated * 1.0e9 /
         NanoLogInternal::RuntimeLogger::stagingBuffer->numAllocations;

@@ -13,44 +13,41 @@ add_definitions(
 )
 
 add_compile_options(
-  -Wformat=2
-  -Wparentheses
-  -Wextra
-  -Wwrite-strings
-  -Wno-address-of-packed-member
-  -Wno-unsupported-friend
-  -Wno-sign-conversion
-  -Wno-sign-compare
-  -Wno-deprecated-volatile
-  -Wno-unused-parameter
-  -Wmissing-format-attribute
-  -Wmissing-declarations
-	-Wbad-function-cast
-  -Woverloaded-virtual
-  -Wcast-qual
-  -Wcast-align
-  -Weffc++
-
-  "$<$<CONFIG:DEBUG>:-fno-omit-frame-pointer>"
-  -fno-ms-extensions
-  # Since we generate binary with different march and mtune now, we record the switches
-  # in the binary https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html
-  -frecord-gcc-switches
-
   # We *always* want debug info, regardless what the cmake best practices tell you!
   -g
   "$<$<CONFIG:RELEASE>:-O3>"
 
   # all warnings are errors...
-  -Werror=format
-  # ...but not unused variables warning, as they can get annoying in release builds because asserts
-  # get compiled out
-  "$<$<CONFIG:RELEASE>:-Wno-unused-variable>"
-  "$<$<CONFIG:RELEASE>:-Wno-unused-const-variable>"
+  -Wall
+  -Wformat=2
+  -Wparentheses
+  -Wextra
+  -Wcast-align
+  -Wcast-qual
+  -Wwrite-strings
+  -Wnull-dereference
+  -Wdangling-else
+  -Wmissing-format-attribute
+  -Wmissing-declarations
+	-Wbad-function-cast
+  -Woverloaded-virtual
+  -Weffc++
+  -Wno-unknown-warning-option
+  -Wno-unused-parameter
+  -Wno-unused-result
+  -Wno-missing-field-initializers
+  -Wno-ambiguous-reversed-operator
+  -Wno-unused-parameter
+  -Wno-unused-result
 
+  # fancy flags
+  -fno-ms-extensions
+  # Since we generate binary with different march and mtune now, we record the switches
+  # in the binary https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html
+  -frecord-gcc-switches
   # see http://gcc.gnu.org/wiki/Visibility
   $<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>
-
+  "$<$<CONFIG:DEBUG>:-fno-omit-frame-pointer>"
   # LTO slows down compile
   "$<$<CONFIG:DEBUG>:-fno-lto>"
   # Speeds up release binary

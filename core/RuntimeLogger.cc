@@ -629,8 +629,12 @@ void RuntimeLogger::setLogFile_internal(const char* filename) {
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
   CPU_SET(LoggerThreadId, &cpuset);
-  int rc = pthread_setaffinity_np(compressionThread.native_handle(),
-                                  sizeof(cpu_set_t), &cpuset);
+  if (int rc = pthread_setaffinity_np(compressionThread.native_handle(),
+                                      sizeof(cpu_set_t), &cpuset);
+      rc != 0) {
+    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
+                                 std::to_string(rc));
+  }
 }
 
 /**
@@ -703,8 +707,6 @@ void RuntimeLogger::sync() {
  */
 char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
                                                          bool blocking) {
-  const char* endOfBuffer = storage + NanoLogConfig::STAGING_BUFFER_SIZE;
-
 #ifdef RECORD_PRODUCER_STATS
   uint64_t start = PerfUtils::Cycles::rdtsc();
 #endif
@@ -717,10 +719,10 @@ char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
   while (minFreeSpace <= nbytes) {
     // Since consumerPos can be updated in a different thread, we
     // save a consistent copy of it here to do calculations on
-    char* cachedConsumerPos = consumerPos;
+    uint64_t cachedConsumerPos = consumerPos;
 
     if (cachedConsumerPos <= producerPos) {
-      minFreeSpace = endOfBuffer - producerPos;
+      minFreeSpace = NanoLogConfig::STAGING_BUFFER_SIZE - producerPos;
 
       if (minFreeSpace > nbytes) break;
 
@@ -729,10 +731,10 @@ char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
 
       // Prevent the roll over if it overlaps the two positions because
       // that would imply the buffer is completely empty when it's not.
-      if (cachedConsumerPos != storage) {
+      if (cachedConsumerPos != 0) {
         // prevents producerPos from updating before endOfRecordedSpace
         Fence::sfence();
-        producerPos = storage;
+        producerPos = 0;
         minFreeSpace = cachedConsumerPos - producerPos;
       }
     } else {
@@ -753,7 +755,7 @@ char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
 #endif
 
   ++numTimesProducerBlocked;
-  return producerPos;
+  return &storage[producerPos];
 }
 
 /**
@@ -770,20 +772,20 @@ char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
  */
 char* RuntimeLogger::StagingBuffer::peek(uint64_t* bytesAvailable) {
   // Save a consistent copy of producerPos
-  char* cachedProducerPos = producerPos;
+  uint64_t cachedProducerPos = producerPos;
 
   if (cachedProducerPos < consumerPos) {
     Fence::lfence();  // Prevent reading new producerPos but old endOf...
     *bytesAvailable = endOfRecordedSpace - consumerPos;
 
-    if (*bytesAvailable > 0) return consumerPos;
+    if (*bytesAvailable > 0) return &storage[consumerPos];
 
     // Roll over
-    consumerPos = storage;
+    consumerPos = 0;
   }
 
   *bytesAvailable = cachedProducerPos - consumerPos;
-  return consumerPos;
+  return &storage[consumerPos];
 }
 
 }  // namespace NanoLogInternal
