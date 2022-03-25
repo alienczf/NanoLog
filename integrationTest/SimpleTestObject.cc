@@ -27,15 +27,15 @@
 
 void SimpleTest::logSomething() {
   static int cnt = 0;
-  NANO_LOG(NOTICE, "SimpleTest::logSomething: Something = %d", ++cnt);
+  NANO_LOG(INF, "SimpleTest::logSomething: Something = %d", ++cnt);
 }
 
 void SimpleTest::wholeBunchOfLogStatements() {
-  NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: Here I am");
+  NANO_LOG(INF, "SimpleTest::wholeBunchOfLogStatements: Here I am");
 
   for (int i = 0; i < 10; ++i) {
-    NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: I am in a loop!");
+    NANO_LOG(INF, "SimpleTest::wholeBunchOfLogStatements: I am in a loop!");
   }
 
-  NANO_LOG(NOTICE, "SimpleTest::wholeBunchOfLogStatements: exiting...");
+  NANO_LOG(INF, "SimpleTest::wholeBunchOfLogStatements: exiting...");
 }

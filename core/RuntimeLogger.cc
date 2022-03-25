@@ -54,7 +54,7 @@ RuntimeLogger::RuntimeLogger()
       aioCb(),
       compressingBuffer(nullptr),
       outputDoubleBuffer(nullptr),
-      currentLogLevel(NOTICE),
+      currentLogLevel(INF),
       cycleAtThreadStart(0),
       cyclesAtLastAIOStart(0),
       cyclesActive(0),

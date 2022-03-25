@@ -800,7 +800,7 @@ class LogMessage {
   inline typename std::enable_if<std::is_same<T, long double>::value, T>::type
   get(int argNum) {
     fprintf(stderr,
-            "**ERROR** Aggregating on Long Doubles is "
+            "**ERR** Aggregating on Long Doubles is "
             "currently unsupported\r\n");
 #ifndef TESTUTIL_H
     exit(2);

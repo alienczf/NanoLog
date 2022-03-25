@@ -41,7 +41,7 @@ using namespace NanoLog::LogLevels;
 
 // Tests whether header functions get parsed as well.
 static void hiddenInHeaderFilePrint() {
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "Messages in the Header"
            " File");
 }

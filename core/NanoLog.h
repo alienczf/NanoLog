@@ -38,22 +38,23 @@ enum LogLevel {
    * Bad stuff that shouldn't happen. The system broke its contract to
    * users in some way or some major assumption was violated.
    */
-  ERROR,
+  ERR,
   /**
-   * Messages at the WARNING level indicate that, although something went
+   * Messages at the WRN level indicate that, although something went
    * wrong or something unexpected happened, it was transient and
    * recoverable.
    */
-  WARNING,
+  WRN,
   /**
-   * Somewhere in between WARNING and DEBUG...
+   * Somewhere in between WRN and DBG...
    */
-  NOTICE,
+  INF,
   /**
-   * Messages at the DEBUG level don't necessarily indicate that anything
+   * Messages at the DBG level don't necessarily indicate that anything
    * went wrong, but they could be useful in diagnosing problems.
    */
-  DEBUG,
+  DBG,
+  TRC,
   NUM_LOG_LEVELS  // must be the last element in the enum
 };
 };  // namespace LogLevels

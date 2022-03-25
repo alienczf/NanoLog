@@ -16,7 +16,7 @@
 #include <cassert>
 
 // Uncomment to enable super verbose logging by NanoLog
-//#define ENABLE_DEBUG_PRINTING
+//#define ENABLE_DBG_PRINTING
 
 namespace NanoLogInternal {
 

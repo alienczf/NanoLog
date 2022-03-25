@@ -29,8 +29,8 @@ namespace NanoLogInternal {
  * Friendly names for each #LogLevel value.
  * Keep this in sync with the LogLevel enum in NanoLog.h.
  */
-static const char* logLevelNames[] = {"(none)", "ERROR", "WARNING", "NOTICE",
-                                      "DEBUG"};
+static const char* logLevelNames[] = {"(none)", "ERR", "WRN",
+                                      "INF",    "DBG", "TRC"};
 
 /**
  * Insert a checkpoint into an output buffer. This operation is fairly
@@ -217,7 +217,7 @@ long Log::Encoder::encodeLogMsgs(char* from, uint64_t nbytes, uint32_t bufferId,
 
     consecutiveEncodeMissesDueToMetadata = 0;
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
     printf("Trying to encode fmtId=%u, size=%u, remaining=%ld\r\n",
            entry->fmtId, entry->entrySize, remaining);
     printf("\t%s\r\n", dictionary.at(entry->fmtId).formatString);
@@ -228,7 +228,7 @@ long Log::Encoder::encodeLogMsgs(char* from, uint64_t nbytes, uint32_t bufferId,
 
       StaticLogInfo& info = dictionary.at(entry->fmtId);
       fprintf(stderr,
-              "NanoLog ERROR: Attempting to log a message that "
+              "NanoLog ERR: Attempting to log a message that "
               "is %u bytes while the maximum allowable size is "
               "%u.\r\n This occurs for the log message %s:%u '%s'"
               "\r\n",
@@ -247,7 +247,7 @@ long Log::Encoder::encodeLogMsgs(char* from, uint64_t nbytes, uint32_t bufferId,
     lastTimestamp = entry->timestamp;
 
     StaticLogInfo& info = dictionary.at(entry->fmtId);
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
     printf("\r\nCompressing \'%s\' with info.id=%d\r\n", info.formatString,
            entry->fmtId);
 #endif
@@ -773,7 +773,7 @@ bool Log::Decoder::createMicroCode(char** microCode, const char* formatString,
 
     if (pf->hasDynamicPrecision) ++fm->numNibbles;
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
     printf("Fragment %d: %s\r\n", fm->numPrintFragments, pf->formatFragment);
     printf("\t\ttype: %u, dWidth: %u, dPrecision: %u, length: %u\r\n",
            pf->argType, pf->hasDynamicWidth, pf->hasDynamicPrecision,
@@ -805,7 +805,7 @@ bool Log::Decoder::createMicroCode(char** microCode, const char* formatString,
     *microCode += endingLength;
   }
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
   printf("Fragment %d: %s\r\n", fm->numPrintFragments, pf->formatFragment);
   printf("\t\ttype: %u, dWidth: %u, dPrecision: %u, length: %u\r\n",
          pf->argType, pf->hasDynamicWidth, pf->hasDynamicPrecision,

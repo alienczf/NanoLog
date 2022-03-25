@@ -56,7 +56,7 @@ class RuntimeLogger {
     logId = static_cast<int32_t>(invocationSites.size());
     invocationSites.push_back(info);
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
     printf("Registered '%s' as id=%d\r\n", info.formatString, logId);
     printf("\tisParamString [%p] = ", info.isArgString);
     for (int i = 0; i < info.numParams; ++i) printf("%d ", info.isArgString[i]);

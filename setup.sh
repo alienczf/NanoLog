@@ -10,9 +10,9 @@ export CC=clang
 
 echo "print CMAKE_FLAGS $CMAKE_FLAGS"
 
-CC_DEBUG_BIN="${DIR_ROOT}/_build/d"
-mkdir -p "${CC_DEBUG_BIN}"
-pushd "${CC_DEBUG_BIN}"
+CC_DBG_BIN="${DIR_ROOT}/_build/d"
+mkdir -p "${CC_DBG_BIN}"
+pushd "${CC_DBG_BIN}"
   touch CMakeCache.txt && cmake -DBUILD_DEV=1 -DCMAKE_INSTALL_PREFIX=../../_run -DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} -GNinja ../..
 popd
 

@@ -337,7 +337,7 @@ store_argument(char** storage, T arg, ParamType paramType, size_t stringSize) {
   std::memcpy(*storage, &arg, sizeof(T));
   *storage += sizeof(T);
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
   printf("\tRBasic  [%p]= ", dest);
   std::cout << *dest << "\r\n";
 #endif
@@ -372,7 +372,7 @@ store_argument(char** storage, T arg, const ParamType paramType,
   std::memcpy(*storage, &size, sizeof(uint32_t));
   *storage += sizeof(uint32_t);
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 #pragma GCC diagnostic ignored "-Wformat"
@@ -677,7 +677,7 @@ inline void compressSingle(BufferUtils::TwoNibbles* nibbles, int* nibbleCnt,
       return;
     }
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
     printf("\tCString [%p->%p-%u]\r\n", *in, *out, stringBytes);
 #endif
 
@@ -715,7 +715,7 @@ inline void compressSingle(BufferUtils::TwoNibbles* nibbles, int* nibbleCnt,
   T argument;
   std::memcpy(&argument, *in, sizeof(T));
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
   printf("\tCBasic  [%p->%p]= ", *in, *out);
   std::cout << argument << "\r\n";
 #endif
@@ -836,7 +836,7 @@ inline void compress(int numNibbles, const ParamType* paramTypes, char** input,
   auto* nibbles = reinterpret_cast<BufferUtils::TwoNibbles*>(out);
   out += (numNibbles + 1) / 2;
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
   printf("\tisArgString [%p] = ", isArgString);
   for (size_t i = 0; i < sizeof...(Ts); ++i) {
     printf("%d ", isArgString[i]);
@@ -934,7 +934,7 @@ inline void log(int& logId, const char* filename, const int linenum,
   ue->timestamp = timestamp;
   ue->entrySize = downCast<uint32_t>(allocSize);
 
-#ifdef ENABLE_DEBUG_PRINTING
+#ifdef ENABLE_DBG_PRINTING
   printf("\r\nRecording %d:'%s' of size %u\r\n", logId, info.formatString,
          ue->entrySize);
 #endif

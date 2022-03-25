@@ -36,31 +36,31 @@ static void evilTestCase(NANO_LOG* log) {
   ////////
   // Basic Tests
   ////////
-  NANO_LOG(NOTICE, "Simple times");
+  NANO_LOG(INF, "Simple times");
 
-  NANO_LOG(NOTICE, "More simplicity");
+  NANO_LOG(INF, "More simplicity");
 
-  NANO_LOG(NOTICE, "How about a number? %d", 1900);
+  NANO_LOG(INF, "How about a number? %d", 1900);
 
-  NANO_LOG(NOTICE, "How about a second number? %d", 1901);
+  NANO_LOG(INF, "How about a second number? %d", 1901);
 
-  NANO_LOG(NOTICE, "How about three numbers without a space? %d%d%d", 1, 2, 3);
+  NANO_LOG(INF, "How about three numbers without a space? %d%d%d", 1, 2, 3);
 
-  NANO_LOG(NOTICE, "How about a double? %lf", 0.11);
+  NANO_LOG(INF, "How about a double? %lf", 0.11);
 
-  NANO_LOG(NOTICE, "How about a nice little string? %s", "Stephen Rocks!");
+  NANO_LOG(INF, "How about a nice little string? %s", "Stephen Rocks!");
 
-  NANO_LOG(NOTICE, "A middle \"%s\" string?", "Stephen Rocks!");
+  NANO_LOG(INF, "A middle \"%s\" string?", "Stephen Rocks!");
 
-  NANO_LOG(NOTICE, "And another string? %s", "yolo swag! blah.");
+  NANO_LOG(INF, "And another string? %s", "yolo swag! blah.");
 
-  NANO_LOG(NOTICE, "One that should be \"end\"? %s", "end\0 FAIL!!!");
+  NANO_LOG(INF, "One that should be \"end\"? %s", "end\0 FAIL!!!");
 
   int cnt = 2;
-  NANO_LOG(NOTICE, "Hello world number %d of %d (%0.2lf%%)! This is %s!", cnt,
-           10, 1.0 * cnt / 10, "Stephen");
+  NANO_LOG(INF, "Hello world number %d of %d (%0.2lf%%)! This is %s!", cnt, 10,
+           1.0 * cnt / 10, "Stephen");
 
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "This is a string of many strings, like %s, %s, and %s"
            " with a number %d and a final string with spacers %*s",
            "this one", "this other one", "this third one", 12345670, 20,
@@ -69,9 +69,9 @@ static void evilTestCase(NANO_LOG* log) {
   void* pointer = (void*)0x7ffe075cbe7d;
   const void* const_ptr = pointer;
 
-  NANO_LOG(NOTICE, "A const void* pointer %p", const_ptr);
+  NANO_LOG(INF, "A const void* pointer %p", const_ptr);
 
-  NANO_LOG(NOTICE, "I'm a small log with a small %s", "string");
+  NANO_LOG(INF, "I'm a small log with a small %s", "string");
 
   uint8_t small = 10;
   uint16_t medium = 33;
@@ -81,7 +81,7 @@ static void evilTestCase(NANO_LOG* log) {
   float Float = 121.121f;
   double Double = 212.212;
 
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "Let's try out all the types! "
            "Pointer = %p! "
            "uint8_t = %u! "
@@ -99,7 +99,7 @@ static void evilTestCase(NANO_LOG* log) {
   int16_t mediumNeg = -9991;
   int32_t largeNeg = -99991;
   int64_t ultra_large_neg = -1;
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "how about some negative numbers? "
            "int8_t %d; "
            "int16_t %d; "
@@ -108,19 +108,18 @@ static void evilTestCase(NANO_LOG* log) {
            "int %d",
            smallNeg, mediumNeg, largeNeg, ultra_large_neg, -12356);
 
-  NANO_LOG(NOTICE, "How about variable width + precision? %*.*lf %*d %10s", 9,
-           2, 12345.12345, 10, 123, "end");
+  NANO_LOG(INF, "How about variable width + precision? %*.*lf %*d %10s", 9, 2,
+           12345.12345, 10, 123, "end");
 
-  NANO_LOG(NOTICE, "How about a variable length string that should end %.*s", 4,
+  NANO_LOG(INF, "How about a variable length string that should end %.*s", 4,
            "here, but not here.");
-  NANO_LOG(NOTICE, "And another one that should end %.4s",
-           "here, but not here.");
+  NANO_LOG(INF, "And another one that should end %.4s", "here, but not here.");
 
   // The Long string tests are commented out due to incompatibilities with
   // certain versions of gcc.
   // // Long strings!
   // const wchar_t *longString = L"asdf";
-  // NANO_LOG(WARNING, "longString: %d %ls", 1, longString);
+  // NANO_LOG(WRN, "longString: %d %ls", 1, longString);
 
   // What happens when strings are not const?
   char stringArray[10];
@@ -128,28 +127,28 @@ static void evilTestCase(NANO_LOG* log) {
   strcpy(stringArray, "bcdefg");
   // wcscpy(longStringArray, longString);
 
-  // NANO_LOG(WARNING, "NonConst %s ls=%ls s=%s",
+  // NANO_LOG(WRN, "NonConst %s ls=%ls s=%s",
   //          stringArray, longStringArray, stringArray);
-  NANO_LOG(WARNING, "NonConst %s and %s", stringArray, stringArray);
-  NANO_LOG(WARNING, "A Character %c", 'd');
+  NANO_LOG(WRN, "NonConst %s and %s", stringArray, stringArray);
+  NANO_LOG(WRN, "A Character %c", 'd');
 
   ////////
   // Name Collision Tests
   ////////
   const char* falsePositive = "NANO_LOG(\"yolo\")";
   ++falsePositive;
-  NANO_LOG(NOTICE, "10) NANO_LOG() \"NANO_LOG(\"Hi \")\"");
+  NANO_LOG(INF, "10) NANO_LOG() \"NANO_LOG(\"Hi \")\"");
 
   printf("Regular Print: NANO_LOG()");
 
   ////////
   // Joining of strings
   ////////
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "11) "
            "SD"
            "F");
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "12) NEW"
            "Lines"
            "So"
@@ -158,20 +157,20 @@ static void evilTestCase(NANO_LOG* log) {
 
   int i = 0;
   ++i;
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "13) Yup\n"
            "ieieieieieieie1");
   ++i;
-  NANO_LOG(NOTICE, "13.5) This should be =2: %d", i);
+  NANO_LOG(INF, "13.5) This should be =2: %d", i);
 
   ////////
   // Preprocessor's ability to rip out strange comments
   ////////
-  NANO_LOG(NOTICE, "14) Hello %d",
+  NANO_LOG(INF, "14) Hello %d",
            // 5
            5);
 
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "14) He"
            "ll"
            // "o"
@@ -179,29 +178,29 @@ static void evilTestCase(NANO_LOG* log) {
            6);
 
   int id = 0;
-  NANO_LOG(NOTICE, "15) This should not be incremented twice (=1):%d", ++id);
+  NANO_LOG(INF, "15) This should not be incremented twice (=1):%d", ++id);
 
   id++;
-  NANO_LOG(NOTICE, "15) This should be incremented once more (=2):%d", id++);
+  NANO_LOG(INF, "15) This should be incremented once more (=2):%d", id++);
   ++id;
 
-  /* This */ NANO_LOG(NOTICE /* log */, /* is */ "16) Hello /* uncool */");
+  /* This */ NANO_LOG(INF /* log */, /* is */ "16) Hello /* uncool */");
 
-  NANO_LOG(NOTICE, "17) This is " /* comment */ "rediculous");
+  NANO_LOG(INF, "17) This is " /* comment */ "rediculous");
 
   /*
-   * NANO_LOG(NOTICE, "NANO_LOG");
+   * NANO_LOG(INF, "NANO_LOG");
    */
 
-  // NANO_LOG(NOTICE, "NANO_LOG");
+  // NANO_LOG(INF, "NANO_LOG");
 
-  NANO_LOG(NOTICE, "18) OLO_SWAG");
+  NANO_LOG(INF, "18) OLO_SWAG");
 
   /* // YOLO
    */
 
   // /*
-  NANO_LOG(NOTICE, "11) SDF");
+  NANO_LOG(INF, "11) SDF");
   const char* dummy = ";";
   ++dummy;
   // */
@@ -209,11 +208,11 @@ static void evilTestCase(NANO_LOG* log) {
   ////////
   // Preprocessor substitutions
   ////////
-  LOG(NOTICE, "sneaky #define LOG");
+  LOG(INF, "sneaky #define LOG");
   hiddenInHeaderFilePrint();
 
-  { NANO_LOG(NOTICE, "No %s", std::string("Hello").c_str()); }
-  { NANO_LOG(NOTICE, "I am so evil"); }
+  { NANO_LOG(INF, "No %s", std::string("Hello").c_str()); }
+  { NANO_LOG(INF, "I am so evil"); }
 
   ////////
   // Non const strings
@@ -221,40 +220,37 @@ static void evilTestCase(NANO_LOG* log) {
   const char* myString = "non-const fmt String";
   // NANO_LOG(myString);   // This will error out the system since we do not yet
   // support arbitrary strings
-  NANO_LOG(NOTICE, "%s", myString);
+  NANO_LOG(INF, "%s", myString);
 
   const char* nonConstString = "Lol";
-  NANO_LOG(NOTICE, "NonConst: %s", nonConstString);
+  NANO_LOG(INF, "NonConst: %s", nonConstString);
 
   ////////
   // Strange Syntax
   ////////
-  NANO_LOG(NOTICE, "{{\"(( False curlies and brackets! %d", 1);
+  NANO_LOG(INF, "{{\"(( False curlies and brackets! %d", 1);
 
-  NANO_LOG(NOTICE, "Same line, bad form");
+  NANO_LOG(INF, "Same line, bad form");
   ++i;
-  NANO_LOG(NOTICE, "Really bad");
-  ++i;
-
-  NANO_LOG(NOTICE, "Ending on different lines");
-
-  NANO_LOG(NOTICE, "Make sure that the inserted code is before the ++i");
+  NANO_LOG(INF, "Really bad");
   ++i;
 
-  NA\
-NO_LOG(NOTI\
-CE,
-       "The worse");
+  NANO_LOG(INF, "Ending on different lines");
 
-  NANO_LOG(NOTICE, "TEST");
+  NANO_LOG(INF, "Make sure that the inserted code is before the ++i");
+  ++i;
+
+  NANO_LOG(INF, "The worse");
+
+  NANO_LOG(INF, "TEST");
 
   // This is currently unfixed in the system
-  // NANO_LOG(NOTICE, "Hello %s %\x64", "a", 5);
+  // NANO_LOG(INF, "Hello %s %\x64", "a", 5);
 
   ////////
   // Repeats of random logs
   ////////
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "14) He"
            "ll"
            // "o"
@@ -262,14 +258,14 @@ CE,
            5);
 
   ++i;
-  NANO_LOG(NOTICE,
+  NANO_LOG(INF,
            "13) Yup\n"
            "ieieieieieieie2");
   ++i;
 
-  NANO_LOG(NOTICE, "Ending on different lines");
+  NANO_LOG(INF, "Ending on different lines");
 
-  NANO_LOG(NOTICE, "1) Simple times");
+  NANO_LOG(INF, "1) Simple times");
 
   //////
   // Special case string precision
@@ -279,15 +275,14 @@ CE,
   // It should ensure that only 4 bytes are logged, not 1,000,000 bytes
   void* largeString = malloc(1000000);
   memset(largeString, 'a', 1000000);
-  NANO_LOG(NOTICE, "This string should end soon with 4 'a''s here: %.4s",
+  NANO_LOG(INF, "This string should end soon with 4 'a''s here: %.4s",
            static_cast<const char*>(largeString));
 
   int length = 5;
-  NANO_LOG(NOTICE,
-           "Another string that should end soon with 5 'a''s here: %.*s",
+  NANO_LOG(INF, "Another string that should end soon with 5 'a''s here: %.*s",
            length, static_cast<const char*>(largeString));
 
-  NANO_LOG(NOTICE, "A string that's just one 'a': %.1000000s", "a");
+  NANO_LOG(INF, "A string that's just one 'a': %.1000000s", "a");
   free(largeString);
 }
 
@@ -314,35 +309,35 @@ void gah() {
 void logLevelTest() {
   LogLevel startingLevel = NanoLog::getLogLevel();
 
-  NanoLog::setLogLevel(DEBUG);
-  NANO_LOG(DEBUG, "Debug");
-  NANO_LOG(NOTICE, "Notice");
-  NANO_LOG(WARNING, "Warning");
-  NANO_LOG(ERROR, "Error");
+  NanoLog::setLogLevel(DBG);
+  NANO_LOG(DBG, "Debug");
+  NANO_LOG(INF, "Notice");
+  NANO_LOG(WRN, "Warning");
+  NANO_LOG(ERR, "Error");
 
-  NanoLog::setLogLevel(NOTICE);
-  NANO_LOG(DEBUG, "Debug");
-  NANO_LOG(NOTICE, "Notice");
-  NANO_LOG(WARNING, "Warning");
-  NANO_LOG(ERROR, "Error");
+  NanoLog::setLogLevel(INF);
+  NANO_LOG(DBG, "Debug");
+  NANO_LOG(INF, "Notice");
+  NANO_LOG(WRN, "Warning");
+  NANO_LOG(ERR, "Error");
 
-  NanoLog::setLogLevel(WARNING);
-  NANO_LOG(DEBUG, "Debug");
-  NANO_LOG(NOTICE, "Notice");
-  NANO_LOG(WARNING, "Warning");
-  NANO_LOG(ERROR, "Error");
+  NanoLog::setLogLevel(WRN);
+  NANO_LOG(DBG, "Debug");
+  NANO_LOG(INF, "Notice");
+  NANO_LOG(WRN, "Warning");
+  NANO_LOG(ERR, "Error");
 
-  NanoLog::setLogLevel(ERROR);
-  NANO_LOG(DEBUG, "Debug");
-  NANO_LOG(NOTICE, "Notice");
-  NANO_LOG(WARNING, "Warning");
-  NANO_LOG(ERROR, "Error");
+  NanoLog::setLogLevel(ERR);
+  NANO_LOG(DBG, "Debug");
+  NANO_LOG(INF, "Notice");
+  NANO_LOG(WRN, "Warning");
+  NANO_LOG(ERR, "Error");
 
   NanoLog::setLogLevel(SILENT_LOG_LEVEL);
-  NANO_LOG(DEBUG, "Debug");
-  NANO_LOG(NOTICE, "Notice");
-  NANO_LOG(WARNING, "Warning");
-  NANO_LOG(ERROR, "Error");
+  NANO_LOG(DBG, "Debug");
+  NANO_LOG(INF, "Notice");
+  NANO_LOG(WRN, "Warning");
+  NANO_LOG(ERR, "Error");
 
   // Restoring the previous log level
   NanoLog::setLogLevel(startingLevel);
@@ -351,24 +346,23 @@ void logLevelTest() {
 // Test all possible specifiers (except %n) from
 // http://www.cplusplus.com/reference/cstdio/printf/ (3/20/18)
 void testAllTheTypes() {
-  NANO_LOG(WARNING,
-           "No Length=%d %i %u %o %x %x %f %F %e %E %g %G %a %A %c %s %p",
+  NANO_LOG(WRN, "No Length=%d %i %u %o %x %x %f %F %e %E %g %G %a %A %c %s %p",
            (int)-1, (int)-2, (unsigned int)3, (unsigned int)4, (unsigned int)5,
            (unsigned int)6, (double)7.0, (double)8.0, (double)9.0, (double)10.0,
            (double)11.0, (double)12.0, (double)13.0, (double)14.0, 'a', "abc",
            (void*)0x1);
 
-  NANO_LOG(WARNING, "hh=%hhd %hhi %hhu %hho %hhx %hhx", (signed char)-1,
+  NANO_LOG(WRN, "hh=%hhd %hhi %hhu %hho %hhx %hhx", (signed char)-1,
            (signed char)-2, (unsigned char)3, (unsigned char)4,
            (unsigned char)5, (unsigned char)6);
 
-  NANO_LOG(WARNING, "h=%hd %hi %hu %ho %hx %hx", (short int)-20000,
+  NANO_LOG(WRN, "h=%hd %hi %hu %ho %hx %hx", (short int)-20000,
            (short int)-20001, (unsigned short int)20002,
            (unsigned short int)20003, (unsigned short int)20004,
            (unsigned short int)20005);
 
   // const wchar_t *longString = L"asdf";
-  NANO_LOG(WARNING, "l=%ld %li %lu %lo %lx %lx %%lc %%ls", (long int)-(1 << 30),
+  NANO_LOG(WRN, "l=%ld %li %lu %lo %lx %lx %%lc %%ls", (long int)-(1 << 30),
            (long int)-(1 << 30) - 1, ((unsigned long int)1UL << 30) + 2,
            ((unsigned long int)1UL << 30) + 3,
            ((unsigned long int)1UL << 30) + 4,
@@ -376,25 +370,24 @@ void testAllTheTypes() {
                                                  // (wchar_t)'a',
                                                  // (const wchar_t*)longString);
 
-  NANO_LOG(WARNING, "ll=%lld %lli %llu %llo %llx %llx",
-           (long long int)1LL << 60, (long long int)-(1LL << 60),
-           (unsigned long long int)1UL << 60, (unsigned long long int)1UL << 61,
-           (unsigned long long int)1UL << 62,
+  NANO_LOG(WRN, "ll=%lld %lli %llu %llo %llx %llx", (long long int)1LL << 60,
+           (long long int)-(1LL << 60), (unsigned long long int)1UL << 60,
+           (unsigned long long int)1UL << 61, (unsigned long long int)1UL << 62,
            (unsigned long long int)1UL << 63);
 
-  NANO_LOG(WARNING, "j=%jd %ji %ju %jo %jx %jx", (intmax_t)1LL << 60,
+  NANO_LOG(WRN, "j=%jd %ji %ju %jo %jx %jx", (intmax_t)1LL << 60,
            (intmax_t) - (1LL << 60), (uintmax_t)1UL << 60, (uintmax_t)1UL << 61,
            (uintmax_t)1UL << 62, (uintmax_t)1UL << 63);
 
-  NANO_LOG(WARNING, "z=%zd %zi %zu %zo %zx %zx", (size_t)1LL << 62,
+  NANO_LOG(WRN, "z=%zd %zi %zu %zo %zx %zx", (size_t)1LL << 62,
            (size_t)1LL << 61, (size_t)1UL << 60, (size_t)1UL << 61,
            (size_t)1UL << 62, (size_t)1UL << 63);
 
-  NANO_LOG(WARNING, "t=%td %ti %tu %to %tx %tx", (ptrdiff_t)1LL << 62,
+  NANO_LOG(WRN, "t=%td %ti %tu %to %tx %tx", (ptrdiff_t)1LL << 62,
            (ptrdiff_t)1LL << 61, (ptrdiff_t)1UL << 60, (ptrdiff_t)1UL << 61,
            (ptrdiff_t)1UL << 62, (ptrdiff_t)1UL << 63);
 
-  NANO_LOG(WARNING, "L=%Lf %LF %Le %LE %Lg %LG %La %LA", (long double)7.0,
+  NANO_LOG(WRN, "L=%Lf %LF %Le %LE %Lg %LG %La %LA", (long double)7.0,
            (long double)8.0, (long double)9.0, (long double)10.0,
            (long double)11.0, (long double)12.0, (long double)13.0,
            (long double)14.0);
@@ -408,7 +401,7 @@ int main() {
   int count = 10;
   uint64_t start = PerfUtils::Cycles::rdtsc();
   for (int i = 0; i < count; ++i) {
-    NANO_LOG(NOTICE, "Loop test!");
+    NANO_LOG(INF, "Loop test!");
   }
 
   uint64_t stop = PerfUtils::Cycles::rdtsc();

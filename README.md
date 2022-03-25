@@ -102,12 +102,12 @@ using namespace NanoLog::LogLevels;
 
 int main() 
 {
-  NANO_LOG(NOTICE, "Hello World! This is an integer %d and a double %lf\r\n", 1, 2.0);
+  NANO_LOG(INF, "Hello World! This is an integer %d and a double %lf\r\n", 1, 2.0);
   return 0;
 }
 ```
 
-Valid log levels are DEBUG, NOTICE, WARNING, and ERROR and the logging level can be set via ```NanoLog::setLogLevel(...)```
+Valid log levels are DBG, INF, WRN, and ERR and the logging level can be set via ```NanoLog::setLogLevel(...)```
 
 The rest of the NanoLog API is documented in the [NanoLog.h](./runtime/NanoLog.h) header file.
 

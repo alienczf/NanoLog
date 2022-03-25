@@ -84,31 +84,31 @@ int main(int argc, char** argv) {
   std::vector<std::pair<std::string, std::function<void()>>> ops{
       {"staticString",
        []() {
-         NANO_LOG(NOTICE, "Starting backup replica garbage collector thread");
+         NANO_LOG(INF, "Starting backup replica garbage collector thread");
        }},
       {"stringConcat",
        []() {
-         NANO_LOG(NOTICE, "Opened session with coordinator at %s",
+         NANO_LOG(INF, "Opened session with coordinator at %s",
                   "basic+udp:host=192.168.1.140,port=12246");
        }},
       {"singleInteger",
        []() {
-         NANO_LOG(NOTICE, "Backup storage speeds (min): %d MB/s read", 181);
+         NANO_LOG(INF, "Backup storage speeds (min): %d MB/s read", 181);
        }},
       {"twoIntegers",
        []() {
-         NANO_LOG(NOTICE,
+         NANO_LOG(INF,
                   "buffer has consumed %lu bytes of extra storage, current "
                   "allocation: %lu bytes",
                   1032024lu, 1016544lu);
        }},
       {"singleDouble",
        []() {
-         NANO_LOG(NOTICE, "Using tombstone ratio balancer with ratio = %0.6lf",
+         NANO_LOG(INF, "Using tombstone ratio balancer with ratio = %0.6lf",
                   0.400000);
        }},
       {"complexFormat", []() {
-         NANO_LOG(NOTICE,
+         NANO_LOG(INF,
                   "Initialized InfUdDriver buffers: %lu receive buffers (%u "
                   "MB), %u transmit buffers (%u MB), took %0.1lf ms",
                   50000lu, 97, 50, 0, 26.2);
