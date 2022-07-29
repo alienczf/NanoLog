@@ -125,6 +125,8 @@ void printConfig();
  */
 int getCoreIdOfBackgroundThread();
 
+void setLogTs(uint64_t);
+
 };  // namespace NanoLog
 
 // These header files are needed for the in-lined runtime code. They are

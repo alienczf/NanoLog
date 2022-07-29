@@ -31,13 +31,14 @@ namespace PerfUtils {
 class Cycles {
  public:
   static void init();
+  static void setMockTsValue(uint64_t ts) { Cycles::mockTscValue = ts; }
 
   /**
    * Return the current value of the fine-grain CPU cycle counter
    * (accessed via the RDTSC instruction).
    */
   static NANOLOG_ALWAYS_INLINE uint64_t rdtsc() {
-#if TESTING
+#if MOCK_TIME
     if (mockTscValue) return mockTscValue;
 #endif
     size_t lo, hi;
@@ -75,7 +76,7 @@ class Cycles {
    * a mock value for testing when appropriate.
    */
   static NANOLOG_ALWAYS_INLINE double getCyclesPerSec() {
-#if TESTING
+#if MOCK_TIME
     if (mockCyclesPerSec != 0.0) {
       return mockCyclesPerSec;
     }
