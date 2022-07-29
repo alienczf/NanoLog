@@ -13,6 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #pragma once
+#define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
 
 #include <algorithm>
 #include <cstdint>
