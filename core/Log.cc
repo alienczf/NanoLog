@@ -1126,49 +1126,9 @@ bool Log::Decoder::BufferFragment::decompressNextLogStatement(
     FILE* outputFd, uint64_t& logMsgsProcessed, LogMessage& logArgs,
     const Checkpoint& checkpoint, std::vector<void*>& fmtId2metadata,
     long aggregationFilterId, void (*aggregationFn)(const char*, ...)) {
-  double secondsSinceCheckpoint, nanos = 0.0;
-  char timeString[32];
-
   if (readPos > endOfBuffer || !hasMoreLogs) {
     hasMoreLogs = false;
     return false;
-  }
-
-  // no need to format the time if we're not going to output
-  if (outputFd) {
-    // Convert to relative time
-    //        double timeDiff;
-    //        if (nextLogTimestamp >= lastTimestamp)
-    //            timeDiff = 1.0e9*PerfUtils::Cycles::toSeconds(
-    //                                    nextLogTimestamp - lastTimestamp,
-    //                                    checkpoint.cyclesPerSecond));
-    //        else
-    //            timeDiff = -1.0e9*PerfUtils::Cycles::toSeconds(
-    //                                    lastTimestamp - nextLogTimestamp,
-    //                                    checkpoint.cyclesPerSecond));
-    //        if (logMsgsProcessed == 0)
-    //            timeDiff = 0;
-    //
-    //        fprintf(outputFd, "%4ld) +%12.2lf ns ", logMsgsProcessed,
-    //        timeDiff);
-
-    // Convert to absolute time
-    secondsSinceCheckpoint = PerfUtils::Cycles::toSeconds(
-        nextLogTimestamp - checkpoint.rdtsc, checkpoint.cyclesPerSecond);
-    int64_t wholeSeconds = static_cast<int64_t>(secondsSinceCheckpoint);
-    nanos =
-        1.0e9 * (secondsSinceCheckpoint - static_cast<double>(wholeSeconds));
-
-    // If the timestamp occurred before the checkpoint, we may have to
-    // adjust the times so that nanos remains positive.
-    if (nanos < 0.0) {
-      wholeSeconds--;
-      nanos += 1.0e9;
-    }
-
-    std::time_t absTime = wholeSeconds + checkpoint.unixTime;
-    std::tm* tm = localtime(&absTime);
-    strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S", tm);
   }
 
   {
@@ -1183,8 +1143,8 @@ bool Log::Decoder::BufferFragment::decompressNextLogStatement(
 
     // Output the context
     if (outputFd) {
-      fprintf(outputFd, "%s.%09.0lf %s:%u %s[%u]: ", timeString, nanos,
-              filename, metadata->lineNumber, logLevel, runtimeId);
+      fprintf(outputFd, "%s:%u %s[%u]: ", filename, metadata->lineNumber,
+              logLevel, runtimeId);
     }
 
     // Print out the actual log message, piece by piece

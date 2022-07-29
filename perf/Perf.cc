@@ -996,7 +996,7 @@ double snprintfFileLocation() {
   uint64_t start = Cycles::rdtsc();
   Util::serialize();
   for (size_t i = 0; i < count; ++i) {
-    snprintf(buffer, 1000, "%s:%d:%s", __FILE__, __LINE__, __func__);
+    snprintf(buffer, 1000, "%s:%d:%s", __FILENAME__, __LINE__, __func__);
   }
   Util::serialize();
   uint64_t stop = Cycles::rdtsc();
@@ -1048,7 +1048,7 @@ double snprintfRAMCloud() {
   Util::serialize();
   for (size_t i = 0; i < count; ++i) {
     snprintf(buffer, 1000, "%010lu.%09lu %s:%d in %s %s[%d]: %s %0.6lf",
-             now.tv_sec, now.tv_nsec, __FILE__, __LINE__, __func__, "Debug",
+             now.tv_sec, now.tv_nsec, __FILENAME__, __LINE__, __func__, "Debug",
              100, "Using tombstone ratio balancer with ratio =", 0.4);
   }
   Util::serialize();
@@ -1303,7 +1303,7 @@ TestInfo tests[] = {
     {"rdtscp", rdtscp_test, "cost of an rdtscp call"},
     {"sched_getcpu", sched_getcpu_test, "Cost of sched_getcpu"},
     {"snprintfFileLocation", snprintfFileLocation,
-     "snprintf only the __FILE__:__LINE__:__func___"},
+     "snprintf only the __FILENAME__:__LINE__:__func___"},
     {"snprintfRAMCloud", snprintfRAMCloud,
      "snprintf in RAMCLOUD_LOG style with a 100 char user message"},
     {"snprintStatic100Char", snprintStatic100Char,

@@ -153,11 +153,11 @@ static FORCE_INLINE uint64_t serialReadPmc(int ecx) {
   return retVal;
 }
 
-#define PERFUTILS_DIE(format_, ...)                 \
-  do {                                              \
-    fprintf(stderr, format_, ##__VA_ARGS__);        \
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__); \
-    abort();                                        \
+#define PERFUTILS_DIE(format_, ...)                     \
+  do {                                                  \
+    fprintf(stderr, format_, ##__VA_ARGS__);            \
+    fprintf(stderr, "%s:%d\n", __FILENAME__, __LINE__); \
+    abort();                                            \
   } while (0)
 
 // Number of bytes in a cache-line in our x86 machines.

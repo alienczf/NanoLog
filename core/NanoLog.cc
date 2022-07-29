@@ -39,5 +39,4 @@ int getCoreIdOfBackgroundThread() {
   return RuntimeLogger::getCoreIdOfBackgroundThread();
 }
 
-void setLogTs(uint64_t ts) { PerfUtils::Cycles::setMockTsValue(ts); }
 };  // namespace NanoLog

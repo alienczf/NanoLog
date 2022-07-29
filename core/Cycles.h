@@ -31,7 +31,6 @@ namespace PerfUtils {
 class Cycles {
  public:
   static void init();
-  static void setMockTsValue(uint64_t ts) { Cycles::mockTscValue = ts; }
 
   /**
    * Return the current value of the fine-grain CPU cycle counter
