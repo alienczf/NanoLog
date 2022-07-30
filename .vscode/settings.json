@@ -68,6 +68,8 @@
         "condition_variable": "cpp",
         "mutex": "cpp",
         "thread": "cpp",
-        "bit": "cpp"
+        "bit": "cpp",
+        "*.def": "cpp",
+        "*.inc": "cpp"
     }
 }

@@ -105,7 +105,19 @@ RuntimeLogger::RuntimeLogger()
         "to support its operations. Quitting...\r\n");
     std::exit(-1);
   }
+
   compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
+
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(LoggerThreadId, &cpuset);
+  if (int rc = pthread_setaffinity_np(compressionThread.native_handle(),
+                                      sizeof(cpu_set_t), &cpuset);
+      rc != 0) {
+    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
+                                 std::to_string(rc));
+  }
+  pthread_setname_np(pthread_self(), "logger");
 }
 
 // RuntimeLogger destructor
@@ -329,6 +341,208 @@ void RuntimeLogger::waitForAIO() {
       hintSyncCompleted.notify_one();
     }
   }
+}
+
+// Documentation in NanoLog.h
+void RuntimeLogger::setLogFile_internal(const char* filename) {
+  // Check if it exists and is readable/writeable
+  if (access(filename, F_OK) == 0 && access(filename, R_OK | W_OK) != 0) {
+    std::string err = "Unable to read/write from new log file: ";
+    err.append(filename);
+    throw std::ios_base::failure(err);
+  }
+
+  // Try to open the file
+  int newFd = open(filename, NanoLogConfig::FILE_PARAMS, 0666);
+  if (newFd < 0) {
+    std::string err = "Unable to open file new log file: '";
+    err.append(filename);
+    err.append("': ");
+    err.append(strerror(errno));
+    throw std::ios_base::failure(err);
+  }
+
+  // Everything seems okay, stop the background thread and change files
+  sync();
+
+  // Stop the compression thread completely
+  {
+    std::lock_guard<std::mutex> lock(nanoLogSingleton.condMutex);
+    compressionThreadShouldExit = true;
+    workAdded.notify_all();
+  }
+
+  if (compressionThread.joinable()) compressionThread.join();
+
+  if (outputFd > 0) close(outputFd);
+  outputFd = newFd;
+
+  // Relaunch thread
+  nextInvocationIndexToBePersisted = 0;  // Reset the dictionary
+  compressionThreadShouldExit = false;
+  compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
+
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(LoggerThreadId, &cpuset);
+  if (int rc = pthread_setaffinity_np(compressionThread.native_handle(),
+                                      sizeof(cpu_set_t), &cpuset);
+      rc != 0) {
+    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
+                                 std::to_string(rc));
+  }
+  pthread_setname_np(pthread_self(), "nanolog");
+}
+
+/**
+ * Set where the NanoLog should output its compressed log. If a previous
+ * log file was specified, NanoLog will attempt to sync() the remaining log
+ * entries before swapping files. For best practices, the output file shall
+ * be set before the first invocation to log by the main thread as this
+ * function is *not* thread safe.
+ *
+ * By default, the NanoLog will output to /tmp/compressedLog
+ *
+ * \param filename
+ *      File for NanoLog to output the compress log
+ *
+ * \throw is_base::failure
+ *      if the file cannot be opened or crated
+ */
+void RuntimeLogger::setLogFile(const char* filename) {
+  nanoLogSingleton.setLogFile_internal(filename);
+}
+
+/**
+ * Sets the minimum log level new NANO_LOG messages will have to meet before
+ * they are saved. Anything lower will be dropped.
+ *
+ * \param logLevel
+ *      LogLevel enum that specifies the minimum log level.
+ */
+void RuntimeLogger::setLogLevel(LogLevel logLevel) {
+  if (logLevel < 0)
+    logLevel = static_cast<LogLevel>(0);
+  else if (logLevel >= NUM_LOG_LEVELS)
+    logLevel = static_cast<LogLevel>(NUM_LOG_LEVELS - 1);
+  nanoLogSingleton.currentLogLevel = logLevel;
+}
+
+/**
+ * Blocks until the NanoLog system is able to persist to disk the
+ * pending log messages that occurred before this invocation. Note that this
+ * operation has similar behavior to a "non-quiescent checkpoint" in a
+ * database which means log messages occurring after this point this
+ * invocation may also be persisted in a multi-threaded system.
+ */
+void RuntimeLogger::sync() {
+  std::unique_lock<std::mutex> lock(nanoLogSingleton.condMutex);
+  nanoLogSingleton.syncStatus = SYNC_REQUESTED;
+  nanoLogSingleton.workAdded.notify_all();
+  nanoLogSingleton.hintSyncCompleted.wait(lock);
+}
+
+/**
+ * Attempt to reserve contiguous space for the producer without making it
+ * visible to the consumer (See reserveProducerSpace).
+ *
+ * This is the slow path of reserveProducerSpace that checks for free space
+ * within storage[] that involves touching variable shared with the compression
+ * thread and thus causing potential cache-coherency delays.
+ *
+ * \param nbytes
+ *      Number of contiguous bytes to reserve.
+ *
+ * \param blocking
+ *      Test parameter that indicates that the function should
+ *      return with a nullptr rather than block when there's
+ *      not enough space.
+ *
+ * \return
+ *      A pointer into storage[] that can be written to by the producer for
+ *      at least nbytes.
+ */
+char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
+                                                         bool blocking) {
+#ifdef RECORD_PRODUCER_STATS
+  uint64_t start = PerfUtils::Cycles::rdtsc();
+#endif
+
+  // There's a subtle point here, all the checks for remaining
+  // space are strictly < or >, not <= or => because if we allow
+  // the record and print positions to overlap, we can't tell
+  // if the buffer either completely full or completely empty.
+  // Doing this check here ensures that == means completely empty.
+  while (minFreeSpace <= nbytes) {
+    // Since consumerPos can be updated in a different thread, we
+    // save a consistent copy of it here to do calculations on
+    uint64_t cachedConsumerPos = consumerPos;
+
+    if (cachedConsumerPos <= producerPos) {
+      minFreeSpace = NanoLogConfig::STAGING_BUFFER_SIZE - producerPos;
+
+      if (minFreeSpace > nbytes) break;
+
+      // Not enough space at the end of the buffer; wrap around
+      endOfRecordedSpace = producerPos;
+
+      // Prevent the roll over if it overlaps the two positions because
+      // that would imply the buffer is completely empty when it's not.
+      if (cachedConsumerPos != 0) {
+        // prevents producerPos from updating before endOfRecordedSpace
+        Fence::sfence();
+        producerPos = 0;
+        minFreeSpace = cachedConsumerPos - producerPos;
+      }
+    } else {
+      minFreeSpace = cachedConsumerPos - producerPos;
+    }
+
+    // Needed to prevent infinite loops in tests
+    if (!blocking && minFreeSpace <= nbytes) return nullptr;
+  }
+
+#ifdef RECORD_PRODUCER_STATS
+  uint64_t cyclesBlocked = PerfUtils::Cycles::rdtsc() - start;
+  cyclesProducerBlocked += cyclesBlocked;
+
+  size_t maxIndex = Util::arraySize(cyclesProducerBlockedDist) - 1;
+  size_t index = std::min(cyclesBlocked / cyclesIn10Ns, maxIndex);
+  ++(cyclesProducerBlockedDist[index]);
+#endif
+
+  ++numTimesProducerBlocked;
+  return &storage[producerPos];
+}
+
+/**
+ * Peek at the data available for consumption within the stagingBuffer.
+ * The consumer should also invoke consume() to release space back
+ * to the producer. This can and should be done piece-wise where a
+ * large peek can be consume()-ed in smaller pieces to prevent blocking
+ * the producer.
+ *
+ * \param[out] bytesAvailable
+ *      Number of bytes consumable
+ * \return
+ *      Pointer to the consumable space
+ */
+char* RuntimeLogger::StagingBuffer::peek(uint64_t* bytesAvailable) {
+  // Save a consistent copy of producerPos
+  uint64_t cachedProducerPos = producerPos;
+
+  if (cachedProducerPos < consumerPos) {
+    Fence::lfence();  // Prevent reading new producerPos but old endOf...
+    *bytesAvailable = endOfRecordedSpace - consumerPos;
+
+    if (*bytesAvailable > 0) return &storage[consumerPos];
+
+    // Roll over
+    consumerPos = 0;
+  }
+
+  *bytesAvailable = cachedProducerPos - consumerPos;
+  return &storage[consumerPos];
 }
 
 /**
@@ -585,207 +799,6 @@ void RuntimeLogger::compressionThreadMain() {
 
   cycleAtThreadStart = 0;
   cyclesActive += PerfUtils::Cycles::rdtsc() - cyclesAwakeStart;
-}
-
-// Documentation in NanoLog.h
-void RuntimeLogger::setLogFile_internal(const char* filename) {
-  // Check if it exists and is readable/writeable
-  if (access(filename, F_OK) == 0 && access(filename, R_OK | W_OK) != 0) {
-    std::string err = "Unable to read/write from new log file: ";
-    err.append(filename);
-    throw std::ios_base::failure(err);
-  }
-
-  // Try to open the file
-  int newFd = open(filename, NanoLogConfig::FILE_PARAMS, 0666);
-  if (newFd < 0) {
-    std::string err = "Unable to open file new log file: '";
-    err.append(filename);
-    err.append("': ");
-    err.append(strerror(errno));
-    throw std::ios_base::failure(err);
-  }
-
-  // Everything seems okay, stop the background thread and change files
-  sync();
-
-  // Stop the compression thread completely
-  {
-    std::lock_guard<std::mutex> lock(nanoLogSingleton.condMutex);
-    compressionThreadShouldExit = true;
-    workAdded.notify_all();
-  }
-
-  if (compressionThread.joinable()) compressionThread.join();
-
-  if (outputFd > 0) close(outputFd);
-  outputFd = newFd;
-
-  // Relaunch thread
-  nextInvocationIndexToBePersisted = 0;  // Reset the dictionary
-  compressionThreadShouldExit = false;
-  compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
-
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(LoggerThreadId, &cpuset);
-  if (int rc = pthread_setaffinity_np(compressionThread.native_handle(),
-                                      sizeof(cpu_set_t), &cpuset);
-      rc != 0) {
-    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
-                                 std::to_string(rc));
-  }
-}
-
-/**
- * Set where the NanoLog should output its compressed log. If a previous
- * log file was specified, NanoLog will attempt to sync() the remaining log
- * entries before swapping files. For best practices, the output file shall
- * be set before the first invocation to log by the main thread as this
- * function is *not* thread safe.
- *
- * By default, the NanoLog will output to /tmp/compressedLog
- *
- * \param filename
- *      File for NanoLog to output the compress log
- *
- * \throw is_base::failure
- *      if the file cannot be opened or crated
- */
-void RuntimeLogger::setLogFile(const char* filename) {
-  nanoLogSingleton.setLogFile_internal(filename);
-}
-
-/**
- * Sets the minimum log level new NANO_LOG messages will have to meet before
- * they are saved. Anything lower will be dropped.
- *
- * \param logLevel
- *      LogLevel enum that specifies the minimum log level.
- */
-void RuntimeLogger::setLogLevel(LogLevel logLevel) {
-  if (logLevel < 0)
-    logLevel = static_cast<LogLevel>(0);
-  else if (logLevel >= NUM_LOG_LEVELS)
-    logLevel = static_cast<LogLevel>(NUM_LOG_LEVELS - 1);
-  nanoLogSingleton.currentLogLevel = logLevel;
-}
-
-/**
- * Blocks until the NanoLog system is able to persist to disk the
- * pending log messages that occurred before this invocation. Note that this
- * operation has similar behavior to a "non-quiescent checkpoint" in a
- * database which means log messages occurring after this point this
- * invocation may also be persisted in a multi-threaded system.
- */
-void RuntimeLogger::sync() {
-  std::unique_lock<std::mutex> lock(nanoLogSingleton.condMutex);
-  nanoLogSingleton.syncStatus = SYNC_REQUESTED;
-  nanoLogSingleton.workAdded.notify_all();
-  nanoLogSingleton.hintSyncCompleted.wait(lock);
-}
-
-/**
- * Attempt to reserve contiguous space for the producer without making it
- * visible to the consumer (See reserveProducerSpace).
- *
- * This is the slow path of reserveProducerSpace that checks for free space
- * within storage[] that involves touching variable shared with the compression
- * thread and thus causing potential cache-coherency delays.
- *
- * \param nbytes
- *      Number of contiguous bytes to reserve.
- *
- * \param blocking
- *      Test parameter that indicates that the function should
- *      return with a nullptr rather than block when there's
- *      not enough space.
- *
- * \return
- *      A pointer into storage[] that can be written to by the producer for
- *      at least nbytes.
- */
-char* RuntimeLogger::StagingBuffer::reserveSpaceInternal(size_t nbytes,
-                                                         bool blocking) {
-#ifdef RECORD_PRODUCER_STATS
-  uint64_t start = PerfUtils::Cycles::rdtsc();
-#endif
-
-  // There's a subtle point here, all the checks for remaining
-  // space are strictly < or >, not <= or => because if we allow
-  // the record and print positions to overlap, we can't tell
-  // if the buffer either completely full or completely empty.
-  // Doing this check here ensures that == means completely empty.
-  while (minFreeSpace <= nbytes) {
-    // Since consumerPos can be updated in a different thread, we
-    // save a consistent copy of it here to do calculations on
-    uint64_t cachedConsumerPos = consumerPos;
-
-    if (cachedConsumerPos <= producerPos) {
-      minFreeSpace = NanoLogConfig::STAGING_BUFFER_SIZE - producerPos;
-
-      if (minFreeSpace > nbytes) break;
-
-      // Not enough space at the end of the buffer; wrap around
-      endOfRecordedSpace = producerPos;
-
-      // Prevent the roll over if it overlaps the two positions because
-      // that would imply the buffer is completely empty when it's not.
-      if (cachedConsumerPos != 0) {
-        // prevents producerPos from updating before endOfRecordedSpace
-        Fence::sfence();
-        producerPos = 0;
-        minFreeSpace = cachedConsumerPos - producerPos;
-      }
-    } else {
-      minFreeSpace = cachedConsumerPos - producerPos;
-    }
-
-    // Needed to prevent infinite loops in tests
-    if (!blocking && minFreeSpace <= nbytes) return nullptr;
-  }
-
-#ifdef RECORD_PRODUCER_STATS
-  uint64_t cyclesBlocked = PerfUtils::Cycles::rdtsc() - start;
-  cyclesProducerBlocked += cyclesBlocked;
-
-  size_t maxIndex = Util::arraySize(cyclesProducerBlockedDist) - 1;
-  size_t index = std::min(cyclesBlocked / cyclesIn10Ns, maxIndex);
-  ++(cyclesProducerBlockedDist[index]);
-#endif
-
-  ++numTimesProducerBlocked;
-  return &storage[producerPos];
-}
-
-/**
- * Peek at the data available for consumption within the stagingBuffer.
- * The consumer should also invoke consume() to release space back
- * to the producer. This can and should be done piece-wise where a
- * large peek can be consume()-ed in smaller pieces to prevent blocking
- * the producer.
- *
- * \param[out] bytesAvailable
- *      Number of bytes consumable
- * \return
- *      Pointer to the consumable space
- */
-char* RuntimeLogger::StagingBuffer::peek(uint64_t* bytesAvailable) {
-  // Save a consistent copy of producerPos
-  uint64_t cachedProducerPos = producerPos;
-
-  if (cachedProducerPos < consumerPos) {
-    Fence::lfence();  // Prevent reading new producerPos but old endOf...
-    *bytesAvailable = endOfRecordedSpace - consumerPos;
-
-    if (*bytesAvailable > 0) return &storage[consumerPos];
-
-    // Roll over
-    consumerPos = 0;
-  }
-
-  *bytesAvailable = cachedProducerPos - consumerPos;
-  return &storage[consumerPos];
 }
 
 }  // namespace NanoLogInternal
