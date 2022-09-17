@@ -955,6 +955,8 @@ inline void log(int& logId, const char* filename, const int linenum,
 static void NANOLOG_PRINTF_FORMAT_ATTR(1, 2)
     checkFormat(NANOLOG_PRINTF_FORMAT const char*, ...) {}
 
+#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') + 1)
+
 /**
  * NANO_LOG macro used for logging.
  *
@@ -989,7 +991,7 @@ static void NANOLOG_PRINTF_FORMAT_ATTR(1, 2)
       NanoLogInternal::checkFormat(format, ##__VA_ARGS__);                     \
     } /*NOLINT(cppcoreguidelines-pro-type-vararg, hicpp-vararg)*/              \
                                                                                \
-    NanoLogInternal::log(logId, __FILE__, __LINE__, NanoLog::severity, format, \
-                         numNibbles, paramTypes, ##__VA_ARGS__);               \
+    NanoLogInternal::log(logId, __FILENAME__, __LINE__, NanoLog::severity,     \
+                         format, numNibbles, paramTypes, ##__VA_ARGS__);       \
   } while (0)
 } /* Namespace NanoLogInternal */
