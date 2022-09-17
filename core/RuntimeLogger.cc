@@ -105,34 +105,11 @@ RuntimeLogger::RuntimeLogger()
         "to support its operations. Quitting...\r\n");
     std::exit(-1);
   }
-
-  compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
-
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(LoggerThreadId, &cpuset);
-  if (int rc = pthread_setaffinity_np(compressionThread.native_handle(),
-                                      sizeof(cpu_set_t), &cpuset);
-      rc != 0) {
-    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
-                                 std::to_string(rc));
-  }
-  pthread_setname_np(pthread_self(), "logger");
 }
 
 // RuntimeLogger destructor
 RuntimeLogger::~RuntimeLogger() {
-  sync();
-
-  // Stop the compression thread
-  {
-    std::lock_guard<std::mutex> lock(nanoLogSingleton.condMutex);
-    nanoLogSingleton.compressionThreadShouldExit = true;
-    nanoLogSingleton.workAdded.notify_all();
-  }
-
-  if (nanoLogSingleton.compressionThread.joinable())
-    nanoLogSingleton.compressionThread.join();
+  RuntimeLogger::stop();
 
   // Free all the data structures
   if (compressingBuffer) {
@@ -148,6 +125,40 @@ RuntimeLogger::~RuntimeLogger() {
   if (outputFd > 0) close(outputFd);
 
   outputFd = 0;
+}
+
+void RuntimeLogger::start() {
+  if (nanoLogSingleton.compressionThread.joinable()) return;  // is running
+  nanoLogSingleton.nextInvocationIndexToBePersisted =
+      0;  // Reset the dictionary
+  nanoLogSingleton.compressionThreadShouldExit = false;
+  nanoLogSingleton.compressionThread =
+      std::thread(&RuntimeLogger::compressionThreadMain, &nanoLogSingleton);
+
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(LoggerThreadId, &cpuset);
+  if (int rc = pthread_setaffinity_np(
+          nanoLogSingleton.compressionThread.native_handle(), sizeof(cpu_set_t),
+          &cpuset);
+      rc != 0) {
+    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
+                                 std::to_string(rc));
+  }
+  pthread_setname_np(pthread_self(), "nanolog");
+}
+
+void RuntimeLogger::stop() {
+  RuntimeLogger::sync();
+  // Stop the compression thread
+  {
+    std::lock_guard<std::mutex> lock(nanoLogSingleton.condMutex);
+    nanoLogSingleton.compressionThreadShouldExit = true;
+    nanoLogSingleton.workAdded.notify_all();
+  }
+
+  if (nanoLogSingleton.compressionThread.joinable())
+    nanoLogSingleton.compressionThread.join();
 }
 
 // Documentation in NanoLog.h
@@ -362,36 +373,14 @@ void RuntimeLogger::setLogFile_internal(const char* filename) {
     throw std::ios_base::failure(err);
   }
 
+  bool isStopped = compressionThreadShouldExit;
+
   // Everything seems okay, stop the background thread and change files
-  sync();
-
-  // Stop the compression thread completely
-  {
-    std::lock_guard<std::mutex> lock(nanoLogSingleton.condMutex);
-    compressionThreadShouldExit = true;
-    workAdded.notify_all();
-  }
-
-  if (compressionThread.joinable()) compressionThread.join();
+  if (!isStopped) RuntimeLogger::stop();
 
   if (outputFd > 0) close(outputFd);
   outputFd = newFd;
-
-  // Relaunch thread
-  nextInvocationIndexToBePersisted = 0;  // Reset the dictionary
-  compressionThreadShouldExit = false;
-  compressionThread = std::thread(&RuntimeLogger::compressionThreadMain, this);
-
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(LoggerThreadId, &cpuset);
-  if (int rc = pthread_setaffinity_np(compressionThread.native_handle(),
-                                      sizeof(cpu_set_t), &cpuset);
-      rc != 0) {
-    throw std::ios_base::failure("Error calling pthread_setaffinity_np: " +
-                                 std::to_string(rc));
-  }
-  pthread_setname_np(pthread_self(), "nanolog");
+  if (!isStopped) RuntimeLogger::start();
 }
 
 /**

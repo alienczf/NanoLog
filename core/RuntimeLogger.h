@@ -119,6 +119,8 @@ class RuntimeLogger {
   static void preallocate();
   static void setLogFile(const char* filename);
   static void setLogLevel(LogLevel logLevel);
+  static void start();  // create new compressionThread if not already running
+  static void stop();   // flush buffer and join compression thread
   static void sync();
 
   static inline LogLevel getLogLevel() {

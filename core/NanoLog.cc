@@ -35,6 +35,9 @@ void setLogLevel(LogLevel logLevel) { RuntimeLogger::setLogLevel(logLevel); }
 
 void sync() { RuntimeLogger::sync(); }
 
+void start() { RuntimeLogger::start(); }
+void stop() { RuntimeLogger::stop(); }
+
 int getCoreIdOfBackgroundThread() {
   return RuntimeLogger::getCoreIdOfBackgroundThread();
 }

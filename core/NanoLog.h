@@ -96,6 +96,9 @@ void setLogLevel(LogLevel logLevel);
  */
 LogLevel getLogLevel();
 
+void start();
+void stop();
+
 /**
  * Waits until all pending log statements are persisted to disk. Note that if
  * there is another logging thread continually adding new pending log

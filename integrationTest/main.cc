@@ -395,6 +395,7 @@ void testAllTheTypes() {
 
 int main() {
   NanoLog::setLogFile("testLog");
+  NanoLog::start();
   evilTestCase(NULL);
   testAllTheTypes();
 
