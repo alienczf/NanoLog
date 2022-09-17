@@ -115,7 +115,6 @@ int main(int argc, char** argv) {
        }}};
 
   std::vector<std::tuple<uint64_t, uint64_t, double, double, double>> results;
-  NanoLog::start();
   for (auto& op : ops) {
     const std::string output_fn = "/tmp/benchmark_" + op.first + ".log";
     const uint64_t preEvents =
