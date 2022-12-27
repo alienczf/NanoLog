@@ -1322,7 +1322,7 @@ bool Log::Decoder::BufferFragment::decompressNextLogStatement(
                                             sizeof(PrintFragment));
     }
 
-    if (outputFd) fprintf(outputFd, "\r\n");
+    // if (outputFd) fprintf(outputFd, "\r\n");
     // We're done, advance the pointer to the end of the last string
     readPos = nextStringArg;
   }
@@ -1402,10 +1402,9 @@ bool Log::Decoder::internalDecompressUnordered(
         break;
       }
       case EntryType::CHECKPOINT:
-        if (!readDictionary(inputFd, true))
-          good = false;
-        else if (outputFd)
-          fprintf(outputFd, "\r\n# New execution started\r\n");
+        if (!readDictionary(inputFd, true)) good = false;
+        // else if (outputFd)
+        //   fprintf(outputFd, "\r\n# New execution started\r\n");
 
         break;
       case EntryType::LOG_MSGS_OR_DIC:
@@ -1419,11 +1418,11 @@ bool Log::Decoder::internalDecompressUnordered(
     }
   }
 
-  if (outputFd)
-    fprintf(outputFd,
-            "\r\n\r\n# Decompression Complete after printing "
-            "%lu log messages\r\n",
-            logMsgsPrinted);
+  // if (outputFd)
+  //   fprintf(outputFd,
+  //           "\r\n\r\n# Decompression Complete after printing "
+  //           "%lu log messages\r\n",
+  //           logMsgsPrinted);
 
   freeBufferFragment(bf);
   return good;
@@ -1511,7 +1510,7 @@ int64_t Log::Decoder::decompressTo(FILE* outputFd) {
           // We're safe, all the stages are empty
           good = readDictionary(inputFd, true);
 
-          if (good) fprintf(outputFd, "\r\n# New execution started\r\n");
+          // if (good) fprintf(outputFd, "\r\n# New execution started\r\n");
 
           break;
 
@@ -1648,7 +1647,7 @@ bool Log::Decoder::getNextLogStatement(LogMessage& logMsg, FILE* outputFd) {
 
       case EntryType::CHECKPOINT:
         if (readDictionary(inputFd, true)) {
-          if (outputFd) fprintf(outputFd, "\r\n# New execution started\r\n");
+          // if (outputFd) fprintf(outputFd, "\r\n# New execution started\r\n");
 
           break;
         }

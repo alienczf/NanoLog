@@ -187,11 +187,11 @@ int main(int argc, char** argv) {
   if (sorted) {
     int64_t numLogMsgs = decoder.decompressTo(outputFd);
 
-    if (outputFd)
-      fprintf(outputFd,
-              "\r\n\r\n# Decompression Complete after printing "
-              "%ld log messages\r\n",
-              numLogMsgs);
+    // if (outputFd)
+    //   fprintf(outputFd,
+    //           "\r\n\r\n# Decompression Complete after printing "
+    //           "%ld log messages\r\n",
+    //           numLogMsgs);
     return 0;
   }
 
@@ -200,11 +200,11 @@ int main(int argc, char** argv) {
     int64_t numLogMsgs = 0;
     while (decoder.getNextLogStatement(args, outputFd)) ++numLogMsgs;
 
-    if (outputFd)
-      fprintf(outputFd,
-              "\r\n\r\n# Decompression Complete after printing "
-              "%ld log messages\r\n",
-              numLogMsgs);
+    // if (outputFd)
+    //   fprintf(outputFd,
+    //           "\r\n\r\n# Decompression Complete after printing "
+    //           "%ld log messages\r\n",
+    //           numLogMsgs);
     return 0;
   }
 
