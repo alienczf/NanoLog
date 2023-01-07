@@ -1143,7 +1143,7 @@ bool Log::Decoder::BufferFragment::decompressNextLogStatement(
 
     // Output the context
     if (outputFd) {
-      fprintf(outputFd, "{\"lvl\":\"%s\",\"tid\":%u,\"line\":\"%s:%u\"",
+      fprintf(outputFd, "{\"lvl\":\"%s\",\"tid\":%u,\"line\":\"%s:%u\",",
               logLevel, runtimeId, filename, metadata->lineNumber);
     }
 
