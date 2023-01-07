@@ -1143,8 +1143,8 @@ bool Log::Decoder::BufferFragment::decompressNextLogStatement(
 
     // Output the context
     if (outputFd) {
-      fprintf(outputFd, "%s:%u %s[%u]: ", filename, metadata->lineNumber,
-              logLevel, runtimeId);
+      fprintf(outputFd, "{\"lvl\":\"%s\",\"tid\":%u,\"line\":\"%s:%u\"",
+              logLevel, runtimeId, filename, metadata->lineNumber);
     }
 
     // Print out the actual log message, piece by piece
@@ -1322,7 +1322,7 @@ bool Log::Decoder::BufferFragment::decompressNextLogStatement(
                                             sizeof(PrintFragment));
     }
 
-    // if (outputFd) fprintf(outputFd, "\r\n");
+    if (outputFd) fprintf(outputFd, "}\n");
     // We're done, advance the pointer to the end of the last string
     readPos = nextStringArg;
   }
