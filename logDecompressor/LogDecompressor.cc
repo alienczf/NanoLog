@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
   }
 
   if (sorted) {
-    int64_t numLogMsgs = decoder.decompressTo(outputFd);
+    decoder.decompressTo(outputFd);
     // if (outputFd)
     //   fprintf(outputFd,
     //           "\r\n\r\n# Decompression Complete after printing "
